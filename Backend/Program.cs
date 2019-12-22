@@ -1,11 +1,8 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using Backend.Services;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Hosting;
-using Orleans;
 using Orleans.Hosting;
-using Orleans.Runtime;
 
 //using Backend.Features.Planet;
 //using Backend.Services;
@@ -41,7 +38,7 @@ namespace cs8test
                 })
                 .ConfigureServices(builder =>
                 {
-//                    builder.AddSingleton<IPlanetsStorage, FakePlanetsStorage>();
+                    builder.AddSingleton<IWorldStateStorage, WorldStateStorage>();
                 })
                 .RunConsoleAsync();
         }

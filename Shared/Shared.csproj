@@ -14,4 +14,8 @@
         </PackageReference>
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\Cosmos.Domain\Cosmos.Domain.fsproj" />
+    </ItemGroup>
+
 </Project>

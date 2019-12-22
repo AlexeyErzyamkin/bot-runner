@@ -23,6 +23,7 @@ namespace Frontend
             services.AddRazorPages();
             services.AddServerSideBlazor();
             services.AddSingleton<PlayersService>();
+            services.AddSingleton<WorldsService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

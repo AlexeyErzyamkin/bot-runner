@@ -22,5 +22,5 @@ module Player =
 
     type T =
         {
-        Name: PlayerName
+            Name: PlayerName
         }

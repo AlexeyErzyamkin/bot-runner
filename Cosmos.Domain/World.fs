@@ -10,37 +10,46 @@ module World =
 
     type Planet =
         {
-        X: X;
-        Y: Y;
+            X: X;
+            Y: Y;
         }
 
     type Universe =
         {
-        Width: Width;
-        Height: Height;
-        Planets: Planet list;
+            Width: Width;
+            Height: Height;
+            Planets: Planet list;
         }
 
     let create (w:Width) (h:Height) planetsCount =
-        let rand = new System.Random()
-        let nextRandom max =
-            uint32 (rand.Next (0, int (max)))
+        let rand = System.Random()
+
+        let (Width maxX) = w
+        let (Height maxY) = h
+        let maxX = int maxX
+        let maxY = int maxY
 
         let coords =
-            let (Width maxX) = w
-            let (Height maxY) = h
             seq {
                 for _ in 1..planetsCount do
-                    (X (nextRandom maxX), Y (nextRandom maxY))
+                    (X (uint32 (rand.Next maxX)), Y (uint32 (rand.Next maxY)))
             }
 
-        let createPlanet (x : X, y : Y) = {X = x; Y = y}
+        let createPlanet (x, y) = {X = x; Y = y}
 
         {
-        Width=w;
-        Height=h;
-        Planets =
-            coords
-            |> Seq.map createPlanet
-            |> Seq.toList
+            Width = w;
+            Height = h;
+            Planets =
+                coords
+                |> Seq.map createPlanet
+                |> Seq.toList
+        }
+
+    type WorldId = WorldId of string
+
+    type T =
+        {
+            Id: WorldId;
+            Universe: Universe;
         }

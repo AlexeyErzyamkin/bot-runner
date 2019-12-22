@@ -10,7 +10,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/Backend/bin/Debug/netcoreapp3.0/Backend.dll",
+            "program": "${workspaceFolder}/Backend/bin/Debug/netcoreapp3.1/Backend.dll",
             "args": [],
             "cwd": "${workspaceFolder}/Backend",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
@@ -23,7 +23,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/Frontend/bin/Debug/netcoreapp3.0/Frontend.dll",
+            "program": "${workspaceFolder}/Frontend/bin/Debug/netcoreapp3.1/Frontend.dll",
             "args": [],
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development",
