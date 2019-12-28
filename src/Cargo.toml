@@ -1,0 +1,6 @@
+[workspace]
+
+members = [
+    "planetary-logic",
+    "planetary-backend"
+]

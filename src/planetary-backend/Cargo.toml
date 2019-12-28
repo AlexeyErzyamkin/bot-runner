@@ -1,0 +1,15 @@
+[package]
+name = "planetary-backend"
+version = "0.1.0"
+authors = ["Alexey Erzyamkin <aerzyamkin@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+actix-web = "2.0"
+actix = "0.9"
+actix-rt = "1.0"
+serde = "1.0"
+serde_json = "1.0"
+uuid = { version = "0.8", features = ["serde", "v4"] }
+
+planetary-logic = { path = "../planetary-logic" }
