@@ -1,11 +1,13 @@
-use crate::auth::{
-    self, AuthKey, PlayerAccountName, PlayerWebAuth, UnverifiedPassword,
-    UnverifiedPlayerAccountName,
+use {
+    crate::{
+        auth::{self, AuthKey, PlayerWebAuth, UnverifiedPassword, UnverifiedPlayerAccountName},
+        storage::Storage,
+    },
+    actix_web::{web, Error, HttpResponse},
+    planetary_logic::player::PlayerId,
+    serde::{Deserialize, Serialize},
+    uuid::Uuid,
 };
-use actix_web::{web, Error, HttpResponse};
-use planetary_logic::player::{PlayerId, PlayerName};
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
 #[derive(Deserialize)]
 pub struct CreateRequest {
@@ -18,7 +20,9 @@ pub struct CreateResponse {
     pub auth_key: AuthKey,
 }
 
-pub async fn handle_create(req: web::Json<CreateRequest>) -> Result<HttpResponse, Error> {
+pub async fn handle_create(
+    (req, data): (web::Json<CreateRequest>, web::Data<Storage>),
+) -> Result<HttpResponse, Error> {
     let account_name = match auth::verify_account_name(&req.name) {
         Ok(account_name) => account_name,
         Err(_e) => return Ok(HttpResponse::BadRequest().finish()),
@@ -37,7 +41,7 @@ pub async fn handle_create(req: web::Json<CreateRequest>) -> Result<HttpResponse
         id: PlayerId(1u64),
     };
 
-    // TODO Write auth to Db
+    let _client = data.client.clone();
 
     let response = CreateResponse { auth_key };
 

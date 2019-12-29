@@ -1,6 +1,8 @@
-use planetary_logic::player::PlayerId;
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
+use {
+    planetary_logic::player::PlayerId,
+    serde::{Deserialize, Serialize},
+    uuid::Uuid,
+};
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct AuthKey(pub Uuid);

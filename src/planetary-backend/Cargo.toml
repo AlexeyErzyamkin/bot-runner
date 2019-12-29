@@ -11,5 +11,8 @@ actix-rt = "1.0"
 serde = "1.0"
 serde_json = "1.0"
 uuid = { version = "0.8", features = ["serde", "v4"] }
+tokio-postgres = "0.5"
+tokio = { version = "0.2", features = ["full"] }
+dotenv = "0.15"
 
 planetary-logic = { path = "../planetary-logic" }
