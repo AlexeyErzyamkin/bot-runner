@@ -5,3 +5,4 @@ authors = ["Alexey Erzyamkin <aerzyamkin@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+serde = "1.0"

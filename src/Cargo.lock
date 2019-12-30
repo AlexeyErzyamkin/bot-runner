@@ -1104,6 +1104,9 @@ dependencies = [
 [[package]]
 name = "planetary-logic"
 version = "0.1.0"
+dependencies = [
+ "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 
 [[package]]
 name = "postgres-protocol"

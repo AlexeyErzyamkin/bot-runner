@@ -1,6 +1,8 @@
 use {
+    crate::storage::Storage,
     planetary_logic::player::PlayerId,
     serde::{Deserialize, Serialize},
+    std::io,
     uuid::Uuid,
 };
 
@@ -38,9 +40,43 @@ pub fn verify_password(password: &UnverifiedPassword) -> Result<Password, String
     }
 }
 
-pub struct PlayerWebAuth {
+pub struct NewPlayerWebAuth {
+    pub auth_key: AuthKey,
     pub account_name: PlayerAccountName,
     pub password: Password,
-    pub auth_key: AuthKey,
+}
+
+pub struct PlayerWebAuth {
     pub id: PlayerId,
+    pub auth_key: AuthKey,
+    pub account_name: PlayerAccountName,
+    pub password: Password,
+}
+
+impl Storage {
+    pub async fn insert_player_web_auth(&self, auth: &NewPlayerWebAuth) -> io::Result<PlayerId> {
+        let client = self.client.clone();
+
+        let auth_key_str = auth.auth_key.0.to_string();
+        let result = client
+            .query(
+                "insert into auth_web (player_id, auth_key, account_name, password) values (default, $1, $2, $3) returning player_id",
+                &[&auth_key_str, &auth.account_name.0, &auth.password.0]
+            ).await;
+
+        match result {
+            Ok(rows) => {
+                let id = rows.iter().next().unwrap().get(0);
+
+                Ok(PlayerId(id))
+            }
+            Err(e) => {
+                eprintln!("Error inserting PlayerWebAuth: {}", e);
+
+                match e {
+                    _ => Err(io::ErrorKind::Other.into()),
+                }
+            }
+        }
+    }
 }

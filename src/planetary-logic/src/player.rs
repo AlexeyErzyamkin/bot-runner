@@ -1,6 +1,9 @@
-pub struct PlayerId(pub u64);
+use serde::Serialize;
 
-pub struct PlayerVersion(pub u64);
+#[derive(Serialize)]
+pub struct PlayerId(pub i64);
+
+pub struct PlayerVersion(pub i16);
 
 pub struct PlayerName(pub String);
 
