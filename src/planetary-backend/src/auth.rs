@@ -1,5 +1,5 @@
 use {
-    crate::storage::Storage,
+    crate::{storage::Storage, Result},
     planetary_logic::player::PlayerId,
     serde::{Deserialize, Serialize},
     std::io,
@@ -54,29 +54,30 @@ pub struct PlayerWebAuth {
 }
 
 impl Storage {
-    pub async fn insert_player_web_auth(&self, auth: &NewPlayerWebAuth) -> io::Result<PlayerId> {
+    pub async fn insert_player_web_auth(&self, auth: &NewPlayerWebAuth) -> Result<PlayerId> {
         let client = self.client.clone();
 
         let auth_key_str = auth.auth_key.0.to_string();
-        let result = client
+        let rows = client
             .query(
                 "insert into auth_web (player_id, auth_key, account_name, password) values (default, $1, $2, $3) returning player_id",
                 &[&auth_key_str, &auth.account_name.0, &auth.password.0]
-            ).await;
+            ).await?;
 
-        match result {
-            Ok(rows) => {
-                let id = rows.iter().next().unwrap().get(0);
+        let id = rows
+            .iter()
+            .next()
+            .ok_or_else(|| -> io::Error { io::ErrorKind::NotFound.into() })?
+            .get(0);
 
-                Ok(PlayerId(id))
-            }
-            Err(e) => {
-                eprintln!("Error inserting PlayerWebAuth: {}", e);
+        Ok(PlayerId(id))
+    }
 
-                match e {
-                    _ => Err(io::ErrorKind::Other.into()),
-                }
-            }
-        }
+    pub async fn get_player_web_auth(
+        &self,
+        account_name: &PlayerAccountName,
+        password: &Password,
+    ) -> Result<PlayerWebAuth> {
+        unimplemented!();
     }
 }

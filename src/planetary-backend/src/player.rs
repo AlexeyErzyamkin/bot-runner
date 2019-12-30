@@ -5,7 +5,7 @@ use {
             UnverifiedPlayerAccountName,
         },
         storage::Storage,
-        ErrorResponse,
+        ErrorResponse, Result,
     },
     actix_web::{web, Error, HttpResponse},
     planetary_logic::player::PlayerId,
@@ -27,7 +27,7 @@ pub struct CreateResponse {
 
 pub async fn handle_create(
     (req, data): (web::Json<CreateRequest>, web::Data<Storage>),
-) -> Result<HttpResponse, Error> {
+) -> Result<HttpResponse> {
     let account_name = match auth::verify_account_name(&req.name) {
         Ok(account_name) => account_name,
         Err(error) => return Ok(HttpResponse::BadRequest().json(ErrorResponse { error })),
@@ -45,19 +45,35 @@ pub async fn handle_create(
         auth_key: auth_key.clone(),
     };
 
-    let _client = data.client.clone();
+    let player_id = data.insert_player_web_auth(&web_auth).await?;
 
-    match data.insert_player_web_auth(&web_auth).await {
-        Ok(player_id) => Ok(HttpResponse::Ok().json(CreateResponse {
-            player_id,
-            auth_key,
-        })),
-        Err(_e) => Ok(HttpResponse::InternalServerError().json(ErrorResponse {
-            error: "DB error".to_string(),
-        })),
-    }
+    Ok(HttpResponse::Ok().json(CreateResponse {
+        player_id,
+        auth_key,
+    }))
 }
 
-pub async fn handle_login() -> Result<HttpResponse, Error> {
+#[derive(Deserialize)]
+pub struct LoginRequest {
+    pub account_name: UnverifiedPlayerAccountName,
+    pub password: UnverifiedPassword,
+}
+
+#[derive(Serialize)]
+pub struct LoginResponse {
+    pub player_id: PlayerId,
+    pub auth_key: AuthKey,
+}
+
+pub async fn handle_login(
+    (req, data): (web::Json<LoginRequest>, web::Data<Storage>),
+) -> Result<HttpResponse> {
+    let verify_name = auth::verify_account_name(&req.account_name);
+    let verify_password = auth::verify_password(&req.password);
+
+    //    let (account_name, password) = verify_name.and_then(|name| {
+    //        data.
+    //    });
+
     unimplemented!();
 }
