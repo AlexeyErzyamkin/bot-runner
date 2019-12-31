@@ -1,13 +1,10 @@
 use {
     crate::{
-        auth::{
-            self, AuthKey, NewPlayerWebAuth, PlayerWebAuth, UnverifiedPassword,
-            UnverifiedPlayerAccountName,
-        },
+        auth::{self, AuthKey, NewPlayerWebAuth, UnverifiedPassword, UnverifiedPlayerAccountName},
         storage::Storage,
         ErrorResponse, Result,
     },
-    actix_web::{web, Error, HttpResponse},
+    actix_web::{web, HttpResponse},
     planetary_logic::player::PlayerId,
     serde::{Deserialize, Serialize},
     uuid::Uuid,
@@ -28,15 +25,8 @@ pub struct CreateResponse {
 pub async fn handle_create(
     (req, data): (web::Json<CreateRequest>, web::Data<Storage>),
 ) -> Result<HttpResponse> {
-    let account_name = match auth::verify_account_name(&req.name) {
-        Ok(account_name) => account_name,
-        Err(error) => return Ok(HttpResponse::BadRequest().json(ErrorResponse { error })),
-    };
-
-    let password = match auth::verify_password(&req.password) {
-        Ok(password) => password,
-        Err(error) => return Ok(HttpResponse::BadRequest().json(ErrorResponse { error })),
-    };
+    let account_name = auth::verify_account_name(&req.name)?;
+    let password = auth::verify_password(&req.password)?;
 
     let auth_key = AuthKey(Uuid::new_v4());
     let web_auth = NewPlayerWebAuth {
@@ -68,12 +58,16 @@ pub struct LoginResponse {
 pub async fn handle_login(
     (req, data): (web::Json<LoginRequest>, web::Data<Storage>),
 ) -> Result<HttpResponse> {
-    let verify_name = auth::verify_account_name(&req.account_name);
-    let verify_password = auth::verify_password(&req.password);
+    let account_name = auth::verify_account_name(&req.account_name)?;
+    let password = auth::verify_password(&req.password)?;
 
-    //    let (account_name, password) = verify_name.and_then(|name| {
-    //        data.
-    //    });
-
-    unimplemented!();
+    match data.get_player_web_auth(&account_name, &password).await? {
+        Some(player_auth) => Ok(HttpResponse::Ok().json(LoginResponse {
+            player_id: player_auth.id,
+            auth_key: player_auth.auth_key,
+        })),
+        None => Ok(HttpResponse::NotFound().json(ErrorResponse {
+            error: "Player not found".to_string(),
+        })),
+    }
 }

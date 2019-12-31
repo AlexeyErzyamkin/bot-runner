@@ -1,5 +1,5 @@
 use {
-    crate::{storage::Storage, Result},
+    crate::{storage::Storage, Error, Result},
     planetary_logic::player::PlayerId,
     serde::{Deserialize, Serialize},
     std::io,
@@ -21,21 +21,23 @@ pub struct Password(pub String);
 
 pub fn verify_account_name(
     account_name: &UnverifiedPlayerAccountName,
-) -> Result<PlayerAccountName, String> {
+) -> Result<PlayerAccountName> {
     match &account_name.0 {
-        s if s.is_empty() => Err("AccountName is empty".to_string()),
-        s if s.len() < 3 || s.len() > 12 => {
-            Err("AccountName is either too short or too long".to_string())
-        }
-        s if !s.is_ascii() => Err("AccountName contains non-ASCII chars".to_string()),
+        s if s.is_empty() => Err(Error::Validation("AccountName is empty".to_string())),
+        s if s.len() < 3 || s.len() > 12 => Err(Error::Validation(
+            "AccountName is either too short or too long".to_string(),
+        )),
+        s if !s.is_ascii() => Err(Error::Validation(
+            "AccountName contains non-ASCII chars".to_string(),
+        )),
         s => Ok(PlayerAccountName(s.clone())),
     }
 }
 
-pub fn verify_password(password: &UnverifiedPassword) -> Result<Password, String> {
+pub fn verify_password(password: &UnverifiedPassword) -> Result<Password> {
     match &password.0 {
-        p if p.is_empty() => Err("Password is empty".to_string()),
-        p if p.len() > 50 => Err("Password too long".to_string()),
+        p if p.is_empty() => Err(Error::Validation("Password is empty".to_string())),
+        p if p.len() > 50 => Err(Error::Validation("Password too long".to_string())),
         p => Ok(Password(p.clone())),
     }
 }
@@ -77,7 +79,31 @@ impl Storage {
         &self,
         account_name: &PlayerAccountName,
         password: &Password,
-    ) -> Result<PlayerWebAuth> {
-        unimplemented!();
+    ) -> Result<Option<PlayerWebAuth>> {
+        let client = self.client.clone();
+
+        let rows = client
+            .query(
+                "select player_id, auth_key from auth_web where account_name = $1 and password = $2",
+                &[&account_name.0, &password.0]
+            ).await?;
+
+        if rows.is_empty() {
+            Ok(None)
+        } else {
+            let result = rows.iter().next().map(|row| {
+                let pid: i64 = row.get(0);
+                let ak: String = row.get(1);
+
+                PlayerWebAuth {
+                    id: PlayerId(pid),
+                    auth_key: AuthKey(Uuid::parse_str(&ak).unwrap()),
+                    account_name: PlayerAccountName(account_name.0.to_owned()),
+                    password: Password(password.0.to_owned()),
+                }
+            });
+
+            Ok(result)
+        }
     }
 }
