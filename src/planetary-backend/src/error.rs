@@ -15,6 +15,7 @@ pub enum Error {
     Configuration,
     Db(::tokio_postgres::Error),
     Io(::std::io::Error),
+    Actors,
 }
 
 impl ResponseError for Error {
@@ -32,6 +33,9 @@ impl ResponseError for Error {
             Error::Io(e) => HttpResponse::InternalServerError().json(ErrorResponse {
                 error: format!("IO error: {}", e),
             }),
+            Error::Actors => HttpResponse::InternalServerError().json(ErrorResponse {
+                error: "Actors error".to_string(),
+            }),
         }
     }
 }
@@ -43,6 +47,7 @@ impl Display for Error {
             Error::Configuration => f.write_str("Configuration error")?,
             Error::Db(e) => write!(f, "DB error: {}", e)?,
             Error::Io(e) => write!(f, "IO error: {}", e)?,
+            Error::Actors => f.write_str("Actors error")?,
         };
 
         Ok(())
@@ -64,5 +69,11 @@ impl From<::tokio_postgres::Error> for Error {
 impl From<::std::env::VarError> for Error {
     fn from(_: ::std::env::VarError) -> Self {
         Error::Configuration
+    }
+}
+
+impl From<::actix::MailboxError> for Error {
+    fn from(_: ::actix::MailboxError) -> Self {
+        Error::Actors
     }
 }

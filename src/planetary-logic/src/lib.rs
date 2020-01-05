@@ -1,5 +1,6 @@
 pub mod player;
 pub mod resources;
+pub mod universe;
 
 //#[cfg(test)]
 //mod tests {

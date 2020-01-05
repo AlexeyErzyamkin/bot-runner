@@ -1,13 +1,11 @@
 use {
     crate::Result,
-    std::sync::Arc,
     tokio,
     tokio_postgres::{self, Client, NoTls},
 };
 
-#[derive(Clone)]
 pub struct Storage {
-    pub client: Arc<Client>,
+    pub client: Client,
 }
 
 pub async fn init(config: &str) -> Result<Storage> {
@@ -19,7 +17,5 @@ pub async fn init(config: &str) -> Result<Storage> {
         }
     });
 
-    Ok(Storage {
-        client: Arc::new(client),
-    })
+    Ok(Storage { client })
 }

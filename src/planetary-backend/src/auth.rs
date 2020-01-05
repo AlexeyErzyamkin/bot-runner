@@ -57,10 +57,8 @@ pub struct PlayerWebAuth {
 
 impl Storage {
     pub async fn insert_player_web_auth(&self, auth: &NewPlayerWebAuth) -> Result<PlayerId> {
-        let client = self.client.clone();
-
         let auth_key_str = auth.auth_key.0.to_string();
-        let rows = client
+        let rows = self.client
             .query(
                 "insert into auth_web (player_id, auth_key, account_name, password) values (default, $1, $2, $3) returning player_id",
                 &[&auth_key_str, &auth.account_name.0, &auth.password.0]
@@ -80,9 +78,7 @@ impl Storage {
         account_name: &PlayerAccountName,
         password: &Password,
     ) -> Result<Option<PlayerWebAuth>> {
-        let client = self.client.clone();
-
-        let rows = client
+        let rows = self.client
             .query(
                 "select player_id, auth_key from auth_web where account_name = $1 and password = $2",
                 &[&account_name.0, &password.0]
