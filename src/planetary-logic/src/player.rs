@@ -1,5 +1,6 @@
 use {
     serde::{Deserialize, Serialize},
+    specs::{Component, VecStorage},
     std::{
         fmt::{self, Display, Formatter},
         hash::Hash,
@@ -25,4 +26,10 @@ pub struct Player {
     pub id: PlayerId,
     pub version: PlayerVersion,
     pub name: PlayerName,
+}
+
+#[derive(Component)]
+#[storage(VecStorage)]
+pub struct OwnByPlayerComponent {
+    pub player_id: PlayerId,
 }

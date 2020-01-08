@@ -8,6 +8,7 @@ use {
 };
 
 pub mod player;
+pub mod universe;
 
 pub struct ActorsDispatcher<T, I>
 where

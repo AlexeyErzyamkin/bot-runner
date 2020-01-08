@@ -1,7 +1,8 @@
 use {
     crate::{
         actors::{
-            player::{PlayerActor, ServiceMessage},
+            player::{BuildMessage, PlayerActor, ServiceMessage},
+            universe::UniverseAddr,
             ActorsDispatcher,
         },
         auth::{self, AuthKey, NewPlayerWebAuth, UnverifiedPassword, UnverifiedPlayerAccountName},
@@ -10,7 +11,7 @@ use {
     },
     actix::Actor,
     actix_web::{web, HttpResponse},
-    planetary_logic::player::PlayerId,
+    planetary_logic::{buildings::BuildingDescId, player::PlayerId},
     serde::{Deserialize, Serialize},
     std::sync::Arc,
     uuid::Uuid,
@@ -20,13 +21,15 @@ use {
 pub struct RequestContext {
     pub storage: Arc<Storage>,
     pub actors_dispatcher: Arc<ActorsDispatcher<PlayerActor, PlayerId>>,
+    pub universe_addr: UniverseAddr,
 }
 
 impl RequestContext {
-    pub fn new(storage: Storage) -> Self {
+    pub fn new(storage: Storage, universe_addr: UniverseAddr) -> Self {
         RequestContext {
             storage: Arc::new(storage),
             actors_dispatcher: Arc::new(ActorsDispatcher::default()),
+            universe_addr,
         }
     }
 }
@@ -82,14 +85,17 @@ pub async fn handle_login(
     let account_name = auth::verify_account_name(&req.account_name)?;
     let password = auth::verify_password(&req.password)?;
 
+    let universe_addr = data.universe_addr.clone();
+
     match data
         .storage
         .get_player_web_auth(&account_name, &password)
         .await?
     {
         Some(player_auth) => {
-            data.actors_dispatcher
-                .start(player_auth.id, |id| PlayerActor::new(id).start());
+            data.actors_dispatcher.start(player_auth.id, move |id| {
+                PlayerActor::new(id, universe_addr.clone()).start()
+            });
 
             Ok(HttpResponse::Ok().json(LoginResponse {
                 player_id: player_auth.id,
@@ -111,7 +117,6 @@ pub struct HeartbeatRequest {
 pub async fn handle_heartbeat(
     (req, data): (web::Json<HeartbeatRequest>, web::Data<RequestContext>),
 ) -> Result<HttpResponse> {
-    //    let acd = data.actors_dispatcher.clone();
     match data.actors_dispatcher.get_addr(&req.player_id) {
         Some(ref addr) => {
             addr.send(ServiceMessage::Heartbeat)
@@ -121,5 +126,32 @@ pub async fn handle_heartbeat(
             Ok(HttpResponse::Ok().finish())
         }
         None => Err(Error::Validation("Player not found".to_string())),
+    }
+}
+
+#[derive(Deserialize)]
+pub struct BuildRequest {
+    pub player_id: PlayerId,
+    pub auth_key: AuthKey,
+    pub desc_id: BuildingDescId,
+}
+
+pub async fn handle_build(
+    (req, data): (web::Json<BuildRequest>, web::Data<RequestContext>),
+) -> Result<HttpResponse> {
+    let addr = &data
+        .actors_dispatcher
+        .get_addr(&req.player_id)
+        .ok_or_else(|| Error::Validation("Player not found".to_string()))?;
+
+    let response = addr
+        .send(BuildMessage {
+            desc_id: req.desc_id,
+        })
+        .await?;
+
+    match response {
+        Ok(_) => Ok(HttpResponse::Ok().finish()),
+        Err(_) => Err(Error::Validation("Huynya".to_string())),
     }
 }

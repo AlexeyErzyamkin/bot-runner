@@ -1,6 +1,7 @@
 use {
+    super::universe::{self, UniverseAddr},
     actix::prelude::*,
-    planetary_logic::player::PlayerId,
+    planetary_logic::{buildings::BuildingDescId, player::PlayerId},
     std::{
         ops::Sub,
         time::{Duration, Instant},
@@ -10,13 +11,15 @@ use {
 pub struct PlayerActor {
     id: PlayerId,
     last_heartbeat: Instant,
+    universe_addr: UniverseAddr,
 }
 
 impl PlayerActor {
-    pub fn new(id: PlayerId) -> Self {
+    pub fn new(id: PlayerId, universe_addr: UniverseAddr) -> Self {
         Self {
             id,
             last_heartbeat: Instant::now(),
+            universe_addr,
         }
     }
 
@@ -64,5 +67,32 @@ impl Handler<ServiceMessage> for PlayerActor {
         }
 
         Ok(())
+    }
+}
+
+pub struct BuildMessage {
+    pub desc_id: BuildingDescId,
+}
+
+pub type BuildMessageResult = Result<(), ()>;
+
+impl Message for BuildMessage {
+    type Result = BuildMessageResult;
+}
+
+impl Handler<BuildMessage> for PlayerActor {
+    type Result = ResponseActFuture<Self, BuildMessageResult>;
+
+    fn handle(&mut self, msg: BuildMessage, ctx: &mut Self::Context) -> Self::Result {
+        let fut = self
+            .universe_addr
+            .send(universe::BuildMessage {
+                player_id: self.id,
+                desc_id: msg.desc_id,
+            })
+            .into_actor(self)
+            .map(move |res, a, _| Ok(()));
+
+        Box::new(fut)
     }
 }
