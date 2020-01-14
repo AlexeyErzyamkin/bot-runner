@@ -2,12 +2,9 @@ use {
     crate::{
         buildings::{
             BuildCompletedComponent, BuildComponent, BuildMineSystem, BuildTimeSystem,
-            BuildingComponent, BuildingDesc, BuildingDescId,
+            BuildingComponent, BuildingDesc, BuildingDescId, BuildingDescType,
         },
-        minerals::{
-            Amount, ContainMineralsComponent, Mineral, MiningMineralsComponent,
-            MiningMineralsSystem,
-        },
+        minerals::{Amount, Mineral, MiningMineralsComponent, MiningMineralsSystem},
         planet::{OnPlanetComponent, PlanetComponent, PlanetId},
         player::{OwnByPlayerComponent, PlayerId},
         DeltaTime, Descriptions,
@@ -39,7 +36,7 @@ impl<'a, 'b> Universe<'a, 'b> {
         // Components
         world.register::<PlanetComponent>();
         world.register::<OnPlanetComponent>();
-        world.register::<ContainMineralsComponent>();
+        //        world.register::<ContainMineralsComponent>();
         world.register::<MiningMineralsComponent>();
         world.register::<BuildingComponent>();
         world.register::<BuildComponent>();
@@ -57,9 +54,9 @@ impl<'a, 'b> Universe<'a, 'b> {
             .with(PlanetComponent {
                 planet_id: PlanetId(1),
             })
-            .with(ContainMineralsComponent {
-                minerals: vec![Mineral::Iron(Amount(1000u64))],
-            })
+            //            .with(ContainMineralsComponent {
+            //                minerals: vec![Mineral::Iron(Amount(1000u64))],
+            //            })
             .build();
 
         Self {
@@ -74,7 +71,7 @@ impl<'a, 'b> Universe<'a, 'b> {
         let now = Instant::now();
         let elapsed_time = now.sub(self.last_step_time);
 
-//        println!("Step elapsed time: {:#?}", &elapsed_time);
+        //        println!("Step elapsed time: {:#?}", &elapsed_time);
 
         let mut world = &mut self.world;
 
@@ -101,12 +98,10 @@ impl<'a, 'b> Universe<'a, 'b> {
             .create_entity()
             .with(OwnByPlayerComponent { player_id });
 
-        let has_build_time = {
-            let desc_read = self.descriptions.read().unwrap();
-            let building_desc = desc_read.get_building(&desc_id);
+        let desc_read = self.descriptions.read().unwrap();
+        let building_desc = desc_read.get_building(&desc_id);
 
-            building_desc.build_time.is_some()
-        };
+        let has_build_time = building_desc.build_time.is_some();
 
         builder = if has_build_time {
             builder.with(BuildComponent {
@@ -114,11 +109,13 @@ impl<'a, 'b> Universe<'a, 'b> {
                 desc_id,
             })
         } else {
-            builder
-                .with(BuildingComponent { desc_id })
-                .with(MiningMineralsComponent {
-                    minerals: Vec::new(),
-                })
+            let builder = builder.with(BuildingComponent { desc_id });
+
+            match building_desc.desc_type {
+                BuildingDescType::Mining(_) => builder.with(MiningMineralsComponent {
+                    mined_amount: Amount::default(),
+                }),
+            }
         };
 
         builder.build()

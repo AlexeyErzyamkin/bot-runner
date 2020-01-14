@@ -1,6 +1,6 @@
 use {
     crate::{
-        minerals::{Mineral, MiningMineralsComponent},
+        minerals::{Amount, Mineral, MiningMineralsComponent},
         DeltaTime, Descriptions,
     },
     serde::Deserialize,
@@ -30,7 +30,7 @@ pub enum BuildingDescType {
 }
 
 pub struct MiningBuildingDesc {
-    pub minerals: Vec<Mineral>,
+    pub mineral: Mineral,
 }
 
 #[derive(Component)]
@@ -71,7 +71,7 @@ impl<'a> System<'a> for BuildTimeSystem {
 
         let read_desc = data.descriptions.read().unwrap();
         let mut completed = Vec::new();
-        
+
         for (entity, build, _) in (&data.entities, &mut builds, !&completed_builds).join() {
             build.build_time_elapsed += data.delta_time.0;
 
@@ -85,9 +85,11 @@ impl<'a> System<'a> for BuildTimeSystem {
                 println!("Build completed (ID:{:?})", &build.desc_id.0);
             }
         }
-        
+
         for entity in completed {
-            completed_builds.insert(entity, BuildCompletedComponent);
+            completed_builds
+                .insert(entity, BuildCompletedComponent)
+                .unwrap();
 
             println!("Build completed component added");
         }
@@ -102,7 +104,7 @@ pub struct BuildMineSystemData<'a> {
 
     pub descriptions: ReadExpect<'a, Arc<RwLock<Descriptions>>>,
 
-    pub completed_builds: ReadStorage<'a, BuildCompletedComponent>,
+    pub completed_builds: WriteStorage<'a, BuildCompletedComponent>,
     pub builds: WriteStorage<'a, BuildComponent>,
     pub buildings: WriteStorage<'a, BuildingComponent>,
     pub mining_minerals: WriteStorage<'a, MiningMineralsComponent>,
@@ -124,18 +126,32 @@ impl<'a> System<'a> for BuildMineSystem {
             let desc = descriptions.get_building(&build.desc_id);
             if let BuildingDescType::Mining(_) = desc.desc_type {
                 finished_builds.push((entity, build.desc_id));
+
+                buildings
+                    .insert(
+                        entity,
+                        BuildingComponent {
+                            desc_id: build.desc_id,
+                        },
+                    )
+                    .unwrap();
+
+                mining_minerals
+                    .insert(
+                        entity,
+                        MiningMineralsComponent {
+                            mined_amount: Amount::default(),
+                        },
+                    )
+                    .unwrap();
             }
         }
 
+        let mut completed_builds = data.completed_builds;
+
         for (entity, desc_id) in finished_builds {
             builds.remove(entity);
-            buildings.insert(entity, BuildingComponent { desc_id });
-            mining_minerals.insert(
-                entity,
-                MiningMineralsComponent {
-                    minerals: Vec::new(),
-                },
-            );
+            completed_builds.remove(entity);
 
             println!("Mine building built: (ID:{:?})", &desc_id.0);
         }
