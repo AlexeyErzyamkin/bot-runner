@@ -61,7 +61,7 @@ impl Message for ServiceMessage {
 impl Handler<ServiceMessage> for PlayerActor {
     type Result = PlayerMessageResult;
 
-    fn handle(&mut self, msg: ServiceMessage, ctx: &mut Self::Context) -> PlayerMessageResult {
+    fn handle(&mut self, msg: ServiceMessage, _ctx: &mut Self::Context) -> PlayerMessageResult {
         match msg {
             ServiceMessage::Heartbeat => self.heartbeat(),
         }
@@ -83,7 +83,7 @@ impl Message for BuildMessage {
 impl Handler<BuildMessage> for PlayerActor {
     type Result = ResponseActFuture<Self, BuildMessageResult>;
 
-    fn handle(&mut self, msg: BuildMessage, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: BuildMessage, _ctx: &mut Self::Context) -> Self::Result {
         let fut = self
             .universe_addr
             .send(universe::BuildMessage {
@@ -91,7 +91,7 @@ impl Handler<BuildMessage> for PlayerActor {
                 desc_id: msg.desc_id,
             })
             .into_actor(self)
-            .map(move |res, a, _| Ok(()));
+            .map(move |_res, _a, _| Ok(()));
 
         Box::new(fut)
     }

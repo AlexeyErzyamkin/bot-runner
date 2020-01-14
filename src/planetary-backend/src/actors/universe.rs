@@ -42,7 +42,7 @@ impl Message for BuildMessage {
 impl Handler<BuildMessage> for UniverseActor {
     type Result = BuildMessageResult;
 
-    fn handle(&mut self, msg: BuildMessage, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: BuildMessage, _ctx: &mut Self::Context) -> Self::Result {
         let _entity = self
             .universe
             .create_building_entity(msg.player_id, msg.desc_id);

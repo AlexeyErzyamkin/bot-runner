@@ -6,4 +6,4 @@ edition = "2018"
 
 [dependencies]
 serde = "1.0"
-specs = { version = "0.15", features = ["specs-derive"] }
+specs = { version = "0.15", features = ["specs-derive", "shred-derive"] }
