@@ -2,11 +2,11 @@ use {
     crate::{
         buildings::{
             BuildCompletedComponent, BuildComponent, BuildMineSystem, BuildTimeSystem,
-            BuildingComponent, BuildingDescId,
+            BuildingComponent, BuildingDesc, BuildingDescId,
         },
         minerals::{
-            Amount, ContainMineralComponent, IronMineral, MiningMineralComponent,
-            MiningMineralSystem,
+            Amount, ContainMineralsComponent, Mineral, MiningMineralsComponent,
+            MiningMineralsSystem,
         },
         planet::{OnPlanetComponent, PlanetComponent, PlanetId},
         player::{OwnByPlayerComponent, PlayerId},
@@ -31,24 +31,16 @@ impl<'a, 'b> Universe<'a, 'b> {
     pub fn new(descriptions: Arc<RwLock<Descriptions>>) -> Self {
         let mut world = World::new();
         let mut dispatcher = DispatcherBuilder::new()
+            .with(MiningMineralsSystem, "mining", &[])
             .with(BuildTimeSystem, "build_time", &[])
-            .with(
-                BuildMineSystem::<IronMineral>::default(),
-                "build_mine_iron",
-                &["build_time"],
-            )
-            .with(
-                MiningMineralSystem::<IronMineral>::default(),
-                "mining_iron",
-                &["build_mine_iron"],
-            )
+            .with(BuildMineSystem, "build_mine", &["build_time"])
             .build();
 
         // Components
         world.register::<PlanetComponent>();
         world.register::<OnPlanetComponent>();
-        world.register::<ContainMineralComponent<IronMineral>>();
-        world.register::<MiningMineralComponent<IronMineral>>();
+        world.register::<ContainMineralsComponent>();
+        world.register::<MiningMineralsComponent>();
         world.register::<BuildingComponent>();
         world.register::<BuildComponent>();
         world.register::<BuildCompletedComponent>();
@@ -65,16 +57,16 @@ impl<'a, 'b> Universe<'a, 'b> {
             .with(PlanetComponent {
                 planet_id: PlanetId(1),
             })
-            .with(ContainMineralComponent::new(Amount::<IronMineral>::new(
-                100f64,
-            )))
+            .with(ContainMineralsComponent {
+                minerals: vec![Mineral::Iron(Amount(1000u64))],
+            })
             .build();
 
         Self {
             world,
             dispatcher,
             last_step_time: Instant::now(),
-            descriptions,
+            descriptions: descriptions.clone(),
         }
     }
 
@@ -82,9 +74,9 @@ impl<'a, 'b> Universe<'a, 'b> {
         let now = Instant::now();
         let elapsed_time = now.sub(self.last_step_time);
 
-        //        println!("Step elapsed time: {:#?}", &elapsed_time);
+//        println!("Step elapsed time: {:#?}", &elapsed_time);
 
-        let world = &mut self.world;
+        let mut world = &mut self.world;
 
         {
             let mut delta_time_resource = world.write_resource::<DeltaTime>();
@@ -124,7 +116,9 @@ impl<'a, 'b> Universe<'a, 'b> {
         } else {
             builder
                 .with(BuildingComponent { desc_id })
-                .with(MiningMineralComponent::<IronMineral>::default())
+                .with(MiningMineralsComponent {
+                    minerals: Vec::new(),
+                })
         };
 
         builder.build()

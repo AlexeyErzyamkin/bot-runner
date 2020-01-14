@@ -7,53 +7,21 @@ use {
         shred::ResourceId, Component, DenseVecStorage, Join, Read, ReadExpect, ReadStorage, System,
         SystemData, World, WriteStorage,
     },
-    std::{
-        marker::PhantomData,
-        sync::{Arc, RwLock},
-        time::Duration,
-    },
+    std::{time::Duration,sync::{Arc, RwLock}},
 };
 
-pub trait Mineral: Send + Sync + 'static {}
+#[derive(Debug)]
+pub struct Amount(pub u64);
 
 #[derive(Debug)]
-pub struct IronMineral;
-
-impl Mineral for IronMineral {}
-
-#[derive(Debug, Clone)]
-pub struct Amount<T>(pub f64, PhantomData<T>);
-
-impl<T> Amount<T> {
-    pub fn new(value: f64) -> Self {
-        Self(value, PhantomData)
-    }
-}
-
-impl<T> Default for Amount<T> {
-    fn default() -> Self {
-        Self::new(0f64)
-    }
-}
-
-pub enum MineralAmount {
-    Iron(Amount<IronMineral>),
+pub enum Mineral {
+    Iron(Amount),
 }
 
 #[derive(Component, Debug)]
 #[storage(DenseVecStorage)]
-pub struct ContainMineralComponent<T: Mineral> {
-    pub amount: Amount<T>,
-    _p: PhantomData<T>,
-}
-
-impl<T: Mineral> ContainMineralComponent<T> {
-    pub fn new(amount: Amount<T>) -> Self {
-        Self {
-            amount,
-            _p: PhantomData,
-        }
-    }
+pub struct ContainMineralsComponent {
+    pub minerals: Vec<Mineral>,
 }
 
 /*
@@ -61,59 +29,38 @@ impl<T: Mineral> ContainMineralComponent<T> {
 списываем ресурсы и добавляем им
 */
 
-pub struct MiningMineralInterval(pub Duration);
+pub struct MiningMineralsInterval(pub Duration);
 
 #[derive(Component, Debug)]
 #[storage(DenseVecStorage)]
-pub struct MiningMineralComponent<T: Mineral> {
-    pub mine_minerals_amount: Amount<T>,
-    pub mined_minerals: Amount<T>,
+pub struct MiningMineralsComponent {
+    pub minerals: Vec<Mineral>,
 }
 
-impl<T: Mineral> MiningMineralComponent<T> {
-    pub fn new(mine_minerals_amount: Amount<T>) -> Self {
-        Self {
-            mine_minerals_amount,
-            mined_minerals: Amount::default(),
-        }
-    }
-}
-
-pub struct MiningMineralSystem<T: Mineral> {
-    _p: PhantomData<T>,
-}
-
-impl<T: Mineral> Default for MiningMineralSystem<T> {
-    fn default() -> Self {
-        Self { _p: PhantomData }
-    }
-}
+pub struct MiningMineralsSystem;
 
 #[derive(SystemData)]
-pub struct MiningMineralSystemData<'a, T: Mineral> {
+pub struct MiningMineralsSystemData<'a> {
     pub descriptions: ReadExpect<'a, Arc<RwLock<Descriptions>>>,
 
     pub delta_time: Read<'a, DeltaTime>,
 
     pub buildings: ReadStorage<'a, BuildingComponent>,
-    pub mines: WriteStorage<'a, MiningMineralComponent<T>>,
+    pub mines: WriteStorage<'a, MiningMineralsComponent>,
 }
 
-impl<'a, T: Mineral> System<'a> for MiningMineralSystem<T> {
-    type SystemData = MiningMineralSystemData<'a, T>;
+impl<'a> System<'a> for MiningMineralsSystem {
+    type SystemData = (
+        ReadExpect<'a, Arc<RwLock<Descriptions>>>,
+        Read<'a, DeltaTime>,
+        ReadStorage<'a, BuildingComponent>,
+        WriteStorage<'a, MiningMineralsComponent>,
+    );
 
-    fn run(&mut self, data: Self::SystemData) {
-        let mut mines = data.mines;
-
-        let descriptions = data.descriptions.clone();
-        let descriptions = descriptions.read().unwrap();
-
-        for (building, mine) in (&data.buildings, &mut mines).join() {
-            let desc = descriptions.get_building(&building.desc_id);
-
-            //                        if let BuildingDesc::Mining(mining_desc) = desc {
-        }
-
+    fn run(
+        &mut self,
+        (descriptions, delta_time, buildings, mut mining_minerals): Self::SystemData,
+    ) {
         //        let descriptions = descriptions.clone();
         //        let descriptions = descriptions.read().unwrap();
         //
