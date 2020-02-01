@@ -6,8 +6,8 @@
 
     public interface IWorkerAcknowledger : IGrainWithIntegerKey
     {
-        ValueTask<Guid> Register();
-        ValueTask<AcknowledgeResult> Acknowledge(Guid instanceId);
+        Task<Guid> Register();
+        Task<AcknowledgeResult> Acknowledge(Guid instanceId);
     }
 
     public abstract class AcknowledgeResult

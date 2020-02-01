@@ -5,7 +5,15 @@ option csharp_namespace = "Protos.Worker";
 package worker;
 
 service Worker {
-  rpc UpdateStatus (StatusRequest) returns (StatusResponse);
+    rpc Register (RegisterRequest) returns (RegisterResponse);
+    rpc UpdateStatus (StatusRequest) returns (StatusResponse);
+}
+
+message RegisterRequest {
+}
+
+message RegisterResponse {
+    string id = 1;
 }
 
 message StatusRequest {
