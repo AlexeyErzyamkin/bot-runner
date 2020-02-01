@@ -1,10 +1,10 @@
-using System;
-
-namespace Backend.Features.Planet
-{
-    [Serializable]
-    public class PlanetState
-    {
-        
-    }
-}
+// using System;
+//
+// namespace Backend.Features.Planet
+// {
+//     [Serializable]
+//     public class PlanetState
+//     {
+//
+//     }
+// }

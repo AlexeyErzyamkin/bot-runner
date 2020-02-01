@@ -1,7 +1,7 @@
-namespace Backend.Features.Buildings
-{
-    public abstract class BuildOptions
-    {
-
-    }
-}
+// namespace Backend.Features.Buildings
+// {
+//     public abstract class BuildOptions
+//     {
+//
+//     }
+// }

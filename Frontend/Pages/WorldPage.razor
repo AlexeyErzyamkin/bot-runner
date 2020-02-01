@@ -1,29 +1,29 @@
-﻿@page "/world"
-
-@using global::Frontend.Services
-
-@inject WorldsService WorldsService
-
-<h1>World</h1>
-
-<input id="input_WorldName" @bind="_worldId" class="active" />
-<input id="input_WorldWidth" @bind="_width" class="active" />
-<input id="input_WorldHeight" @bind="_height" class="active" />
-<input id="input_WorldPlanetsCount" @bind="_planetsCount" class="active" />
-
-<button class="btn btn-primary" @onclick="Create">Create World</button>
-
-@code {
-    string? _worldId = null;
-    uint _width = 0;
-    uint _height = 0;
-    int _planetsCount = 0;
-
-    async Task Create()
-    {
-        if (_worldId != null)
-        {
-            await WorldsService.Create(_worldId, _width, _height, _planetsCount);
-        }
-    }
-}
+﻿@* @page "/world" *@
+@* *@
+@* @using global::Frontend.Services *@
+@* *@
+@* @inject WorldsService WorldsService *@
+@* *@
+@* <h1>World</h1> *@
+@* *@
+@* <input id="input_WorldName" @bind="_worldId" class="active" /> *@
+@* <input id="input_WorldWidth" @bind="_width" class="active" /> *@
+@* <input id="input_WorldHeight" @bind="_height" class="active" /> *@
+@* <input id="input_WorldPlanetsCount" @bind="_planetsCount" class="active" /> *@
+@* *@
+@* <button class="btn btn-primary" @onclick="Create">Create World</button> *@
+@* *@
+@* @code { *@
+@*     string? _worldId = null; *@
+@*     uint _width = 0; *@
+@*     uint _height = 0; *@
+@*     int _planetsCount = 0; *@
+@* *@
+@*     async Task Create() *@
+@*     { *@
+@*         if (_worldId != null) *@
+@*         { *@
+@*             await WorldsService.Create(_worldId, _width, _height, _planetsCount); *@
+@*         } *@
+@*     } *@
+@* } *@

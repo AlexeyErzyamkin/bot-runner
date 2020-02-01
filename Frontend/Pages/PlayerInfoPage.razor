@@ -1,39 +1,39 @@
-﻿@page "/player_info"
-
-@using global::Frontend.Services
-@using global::Shared
-
-@inject PlayersService PlayersService
-
-<h1>Player Info</h1>
-
-@if (playerInfo is null)
-{
-    <p><em>Loading...</em></p>
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <td>Field</td>
-                <td>Value</td>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>Name</td>
-                <td>@playerInfo.PlayerName</td>
-            </tr>
-        </tbody>
-    </table>
-}
-
-@code {
-    PlayerInfo? playerInfo = null;
-
-    protected override async Task OnInitializedAsync()
-    {
-        playerInfo = await PlayersService.GetInfo(1);
-    }
-}
+﻿@* @page "/player_info" *@
+@* *@
+@* @using global::Frontend.Services *@
+@* @using global::Shared *@
+@* *@
+@* @inject PlayersService PlayersService *@
+@* *@
+@* <h1>Player Info</h1> *@
+@* *@
+@* @if (playerInfo is null) *@
+@* { *@
+@*     <p><em>Loading...</em></p> *@
+@* } *@
+@* else *@
+@* { *@
+@*     <table class="table"> *@
+@*         <thead> *@
+@*             <tr> *@
+@*                 <td>Field</td> *@
+@*                 <td>Value</td> *@
+@*             </tr> *@
+@*         </thead> *@
+@*         <tbody> *@
+@*             <tr> *@
+@*                 <td>Name</td> *@
+@*                 <td>@playerInfo.PlayerName</td> *@
+@*             </tr> *@
+@*         </tbody> *@
+@*     </table> *@
+@* } *@
+@* *@
+@* @code { *@
+@*     PlayerInfo? playerInfo = null; *@
+@* *@
+@*     protected override async Task OnInitializedAsync() *@
+@*     { *@
+@*         playerInfo = await PlayersService.GetInfo(1); *@
+@*     } *@
+@* } *@

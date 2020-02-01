@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Frontend.Services;
+// using Frontend.Services;
 
 namespace Frontend
 {
@@ -22,8 +22,8 @@ namespace Frontend
         {
             services.AddRazorPages();
             services.AddServerSideBlazor();
-            services.AddSingleton<PlayersService>();
-            services.AddSingleton<WorldsService>();
+            // services.AddSingleton<PlayersService>();
+            // services.AddSingleton<WorldsService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

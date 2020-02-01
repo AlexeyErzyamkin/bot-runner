@@ -1,0 +1,23 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "Protos.Worker";
+
+package worker;
+
+service Worker {
+  rpc UpdateStatus (StatusRequest) returns (StatusResponse);
+}
+
+message StatusRequest {
+  string id = 1;
+}
+
+message StatusResponse {
+    enum ResultCode {
+        NOT_REGISTERED = 0;
+        OK = 1;
+    }
+    ResultCode result = 1;
+    int32 version = 2;
+    int32 update_version = 3;
+}
