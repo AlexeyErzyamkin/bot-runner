@@ -1,4 +1,4 @@
-namespace Backend.Host.Grpc
+namespace Backend.GrpcHost
 {
     using Microsoft.Extensions.Hosting;
     using Microsoft.AspNetCore.Hosting;

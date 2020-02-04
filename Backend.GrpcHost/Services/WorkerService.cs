@@ -1,15 +1,14 @@
 ﻿using Grpc.Core;
-
-namespace Backend.Host.Grpc.Services
-{
-    using System;
+using System;
     using System.Threading.Tasks;
-    using Protos.Worker;
+    using Protocols.Worker;
     using Microsoft.Extensions.Logging;
     using Orleans;
     using Backend.Contracts.Features.Workers;
 
-    public class WorkerService : Worker.WorkerBase
+namespace Backend.GrpcHost.Services
+{
+    public class WorkerService : WorkerProtocol.WorkerProtocolBase
     {
         private readonly ILogger<WorkerService> _logger;
         private readonly IGrainFactory _grainFactory;
@@ -18,6 +17,20 @@ namespace Backend.Host.Grpc.Services
         {
             _logger = logger;
             _grainFactory = grainFactory;
+        }
+
+        public override async Task<RegisterResponse> Register(RegisterRequest request, ServerCallContext context)
+        {
+            _logger.LogDebug(nameof(Register));
+
+            var workerId = Guid.NewGuid();
+            var worker = _grainFactory.GetGrain<IWorkerGrain>(workerId);
+            await worker.Register();
+
+            return new RegisterResponse
+            {
+                Id = workerId.ToString()
+            };
         }
 
         public override async Task<StatusResponse> UpdateStatus(StatusRequest request, ServerCallContext context)

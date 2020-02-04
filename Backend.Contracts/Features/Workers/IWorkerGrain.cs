@@ -24,6 +24,10 @@
 
     public interface IWorkerGrain : IGrainWithGuidKey
     {
+        Task Register();
+
+        Task Unregister();
+
         ValueTask<WorkerStatus> UpdateStatus();
     }
 }

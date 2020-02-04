@@ -1,10 +1,10 @@
 ﻿syntax = "proto3";
 
-option csharp_namespace = "Protos.Worker";
+option csharp_namespace = "Protocols.Worker";
 
 package worker;
 
-service Worker {
+service WorkerProtocol {
     rpc Register (RegisterRequest) returns (RegisterResponse);
     rpc UpdateStatus (StatusRequest) returns (StatusResponse);
 }

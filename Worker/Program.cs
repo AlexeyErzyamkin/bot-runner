@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 namespace Worker
 {
     using Grpc.Net.Client;
-    using Protos.Worker;
+    using Protocols.Worker;
 
     class Program
     {
@@ -13,7 +13,7 @@ namespace Worker
         static async Task Main(string[] args)
         {
             using var channel = GrpcChannel.ForAddress("https://localhost:5001");
-            var client = new Worker.WorkerClient(channel);
+            var client = new WorkerProtocol.WorkerProtocolClient(channel);
 
             while (true)
             {

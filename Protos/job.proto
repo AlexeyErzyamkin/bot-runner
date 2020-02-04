@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option csharp_namespace = "Protocols.Job";
+
+package job;
+
+service JobProtocol {
+    rpc Init (InitRequest) returns (InitResponse);
+}
+
+message InitRequest {
+}
+
+message InitResponse {
+}

@@ -1,0 +1,53 @@
+@page "/jobs"
+
+@using Backend.Contracts.Features.Jobs
+@using Orleans.Streams
+@using Frontend.Features.Jobs.Components
+@using Frontend.Features.Jobs.Models
+
+@implements Orleans.Streams.IAsyncObserver<JobUpdate>
+
+@inject Orleans.IClusterClient ClusterClient
+
+<JobsListComponent Jobs="@_jobs" />
+
+@code
+{
+    private List<JobModel> _jobs = new List<JobModel>();
+
+    protected override Task OnInitializedAsync()
+    {
+        var sp = ClusterClient.GetStreamProvider("");
+        var updatesStream = sp.GetStream<JobUpdate>(JobsConstants.JobsUpdatesStreamId, null);
+        updatesStream.SubscribeAsync(this);
+
+        return base.OnInitializedAsync();
+    }
+
+    Task IAsyncObserver<JobUpdate>.OnNextAsync(JobUpdate item, StreamSequenceToken token)
+    {
+        if (_jobs.FirstOrDefault(m => m.JobId == item.JobId) is {} existingModel)
+        {
+            // update model
+        }
+        else
+        {
+            _jobs.Add(new JobModel
+            {
+                JobId = item.JobId
+            });
+        }
+
+        return Task.CompletedTask;
+    }
+
+    Task IAsyncObserver<JobUpdate>.OnCompletedAsync()
+    {
+        throw new NotImplementedException();
+    }
+
+    Task IAsyncObserver<JobUpdate>.OnErrorAsync(Exception ex)
+    {
+        throw new NotImplementedException();
+    }
+}

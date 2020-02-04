@@ -11,4 +11,7 @@
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)worker.proto" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)job.proto" />
+  </ItemGroup>
 </Project>

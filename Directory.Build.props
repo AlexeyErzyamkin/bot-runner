@@ -3,7 +3,7 @@
   <PropertyGroup>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
-    <WarningsAsErrors>8604,8602,8618,8656</WarningsAsErrors>
+    <WarningsAsErrors>8604,8602,8618,8656,8625</WarningsAsErrors>
   </PropertyGroup>
 
 </Project>

@@ -1,0 +1,17 @@
+@using Frontend.Features.Jobs.Models
+
+@if (Jobs != null)
+{
+    foreach (var model in Jobs)
+    {
+        <div class="text-lg-center">
+            @model.JobId.ToString()
+        </div>
+    }
+}
+
+@code
+{
+    [Parameter]
+    public List<JobModel>? Jobs { get; set; }
+}
