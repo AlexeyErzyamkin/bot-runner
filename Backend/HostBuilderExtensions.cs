@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using Backend.Contracts;
 // using Backend.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -17,6 +18,9 @@ namespace Backend
                 .UseOrleans(builder =>
                 {
                     builder.UseLocalhostClustering();
+                    builder.AddSimpleMessageStreamProvider(Constants.StreamProviderName);
+                    builder.AddMemoryGrainStorageAsDefault();
+                    builder.AddMemoryGrainStorage("PubSubStore");
 
                     // builder.ConfigureApplicationParts(manager =>
                     // {

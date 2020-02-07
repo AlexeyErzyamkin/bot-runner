@@ -1,9 +1,11 @@
 using System;
 using System.Threading.Tasks;
+using Backend.Contracts;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Orleans;
+using Orleans.Hosting;
 
 namespace Frontend
 {
@@ -13,6 +15,7 @@ namespace Frontend
         {
             var clusterClient = new ClientBuilder()
                 .UseLocalhostClustering()
+                .AddSimpleMessageStreamProvider(Constants.StreamProviderName)
                 .Build();
 
             var retryFilter = CreateRetryFilter();

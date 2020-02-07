@@ -61,22 +61,29 @@ namespace Backend.Contracts.Features.Jobs
 
     public class JobDescription
     {
-        public JobDescription(Start start, Stop stop, int count)
+        public JobDescription(string scenarioName, int botsCount, int botsCountAtSameTime, int botStartDelay)
         {
-            Start = start;
-            Stop = stop;
-            Count = count;
+            ScenarioName = scenarioName;
+            BotsCount = botsCount;
+            BotsCountAtSameTime = botsCountAtSameTime;
+            BotStartDelay = botStartDelay;
         }
 
-        public Start Start { get; }
+        // public Start Start { get; }
+        //
+        // public Stop Stop { get; }
 
-        public Stop Stop { get; }
-
-        public int Count { get; }
+        public string ScenarioName { get; }
+        
+        public int BotsCount { get; }
+        
+        public int BotsCountAtSameTime { get; }
+        
+        public int BotStartDelay { get; }
     }
 
     public interface IJobGrain : IGrainWithGuidKey
     {
-        Task Init(JobDescription description);
+        Task Update(JobDescription description);
     }
 }

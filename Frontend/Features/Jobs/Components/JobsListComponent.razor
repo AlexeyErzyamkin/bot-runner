@@ -1,12 +1,11 @@
 @using Frontend.Features.Jobs.Models
+@using Frontend.Features.Jobs.Components;
 
 @if (Jobs != null)
 {
     foreach (var model in Jobs)
     {
-        <div class="text-lg-center">
-            @model.JobId.ToString()
-        </div>
+        <JobComponent Job="@model" />
     }
 }
 

@@ -1,5 +1,6 @@
 @page "/jobs"
 
+@using Backend.Contracts
 @using Backend.Contracts.Features.Jobs
 @using Orleans.Streams
 @using Frontend.Features.Jobs.Components
@@ -11,17 +12,37 @@
 
 <JobsListComponent Jobs="@_jobs" />
 
+<button class="btn btn-primary" @onclick="@AddJob" >Add Job</button>
+
 @code
 {
     private List<JobModel> _jobs = new List<JobModel>();
 
-    protected override Task OnInitializedAsync()
+    private async Task AddJob()
     {
-        var sp = ClusterClient.GetStreamProvider("");
-        var updatesStream = sp.GetStream<JobUpdate>(JobsConstants.JobsUpdatesStreamId, null);
-        updatesStream.SubscribeAsync(this);
+        var job = new JobModel(Guid.NewGuid(), "Job", 0);
 
-        return base.OnInitializedAsync();
+        _jobs.Add(job);
+
+        var jobGrain = ClusterClient.GetGrain<IJobGrain>(job.JobId);
+        await jobGrain.Update(new JobDescription(
+            // new Start.Now(),
+            // new Stop.Never(),
+            "test",
+            job.BotsCount,
+            0,
+            0
+        ));
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var sp = ClusterClient.GetStreamProvider(Constants.StreamProviderName);
+        var updatesStream = sp.GetStream<JobUpdate>(JobsConstants.JobStreamId, JobsConstants.UpdatesStreamNs);
+        await updatesStream.SubscribeAsync(this);
+
+        var musterStream = sp.GetStream<JobMuster>(JobsConstants.JobStreamId, JobsConstants.MusterStreamNs);
+        await musterStream.OnNextAsync(new JobMuster());
     }
 
     Task IAsyncObserver<JobUpdate>.OnNextAsync(JobUpdate item, StreamSequenceToken token)
@@ -29,13 +50,11 @@
         if (_jobs.FirstOrDefault(m => m.JobId == item.JobId) is {} existingModel)
         {
             // update model
+            existingModel.UpdateCount += 1;
         }
         else
         {
-            _jobs.Add(new JobModel
-            {
-                JobId = item.JobId
-            });
+            _jobs.Add(new JobModel(item.JobId, "Job", 0));
         }
 
         return Task.CompletedTask;

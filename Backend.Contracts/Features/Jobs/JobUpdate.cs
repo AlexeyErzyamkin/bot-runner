@@ -2,13 +2,38 @@ using System;
 
 namespace Backend.Contracts.Features.Jobs
 {
-    public class JobUpdate
+    public abstract class JobUpdate
     {
-        public JobUpdate(Guid jobId)
+        private JobUpdate(Guid jobId)
         {
             JobId = jobId;
         }
 
         public Guid JobId { get; }
+
+        public sealed class Muster : JobUpdate
+        {
+            public Muster(Guid jobId) : base(jobId)
+            {
+            }
+        }
+
+        public sealed class Delete : JobUpdate
+        {
+            public Delete(Guid jobId) : base(jobId)
+            {
+            }
+        }
+
+        public sealed class Update : JobUpdate
+        {
+            public Update(Guid jobId) : base(jobId)
+            {
+            }
+        }
+    }
+
+    public class JobMuster
+    {
     }
 }

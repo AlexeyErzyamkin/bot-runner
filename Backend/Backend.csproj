@@ -5,6 +5,8 @@
         <TargetFramework>netcoreapp3.1</TargetFramework>
         <ApplicationIcon />
         <StartupObject />
+        <ServerGarbageCollection>true</ServerGarbageCollection>
+        <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
     </PropertyGroup>
 
     <ItemGroup>
