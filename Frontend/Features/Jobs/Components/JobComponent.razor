@@ -1,15 +1,16 @@
-@using Frontend.Features.Jobs.Models
+@using Backend.Models.Features.Jobs
 @using Frontend.Components
+@using Frontend.Features.Jobs.Models
 
 @if (Job != null)
 {
     <div class="card">
         <div class="card-body">
-            <h6 class="card-title">@Job.ShortDescription</h6>
+            <h6 class="card-title">@Job.Model.Name</h6>
 
-            <EditableInputComponent Label="Name" Edit="@_editMode" Value="@Job.ShortDescription"/>
-            <EditableInputComponent Label="Count" Edit="@_editMode" Value="@Job.BotsCount"/>
-            <EditableInputComponent Label="Updates" Value="@Job.UpdateCount"/>
+            <EditableInputComponent Label="Name" Edit="@_editMode" Value="@Job.Model.Name"/>
+            <EditableInputComponent Label="Count" Edit="@_editMode" Value="@Job.Model.BotsCount"/>
+            @* <EditableInputComponent Label="Updates" Value="@Job.UpdateCount"/> *@
         </div>
         <div class="card-footer">
             @if (_editMode)
@@ -28,12 +29,12 @@
 @code
 {
     [Parameter]
-    public JobModel? Job { get; set; }
+    public JobModelView? Job { get; set; }
 
     private bool _editMode;
     // private string? _jobId;
 
-    private JobModel? _originalJob;
+    private JobModelView? _originalJob;
 
     protected override void OnParametersSet()
     {
@@ -55,7 +56,7 @@
         if (Job != null)
         {
             _originalJob = Job;
-            Job = new JobModel(_originalJob.JobId, _originalJob.ShortDescription, _originalJob.BotsCount);
+            // Job = new JobModel(_originalJob.JobId, _originalJob.Name, _originalJob.BotsCount);
         }
     }
 

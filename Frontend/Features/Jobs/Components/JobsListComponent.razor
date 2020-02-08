@@ -1,5 +1,6 @@
+@using Backend.Models.Features.Jobs
+@using Frontend.Features.Jobs.Components
 @using Frontend.Features.Jobs.Models
-@using Frontend.Features.Jobs.Components;
 
 @if (Jobs != null)
 {
@@ -12,5 +13,5 @@
 @code
 {
     [Parameter]
-    public List<JobModel>? Jobs { get; set; }
+    public List<JobModelView>? Jobs { get; set; }
 }

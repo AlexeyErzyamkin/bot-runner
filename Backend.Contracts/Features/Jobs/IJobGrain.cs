@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Backend.Models.Features.Jobs;
 
 namespace Backend.Contracts.Features.Jobs
 {
@@ -74,16 +75,16 @@ namespace Backend.Contracts.Features.Jobs
         // public Stop Stop { get; }
 
         public string ScenarioName { get; }
-        
+
         public int BotsCount { get; }
-        
+
         public int BotsCountAtSameTime { get; }
-        
+
         public int BotStartDelay { get; }
     }
 
     public interface IJobGrain : IGrainWithGuidKey
     {
-        Task Update(JobDescription description);
+        Task Update(JobModel model);
     }
 }

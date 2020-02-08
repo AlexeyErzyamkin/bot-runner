@@ -4,39 +4,44 @@
 @using Backend.Contracts.Features.Jobs
 @using Orleans.Streams
 @using Frontend.Features.Jobs.Components
+@using Backend.Models.Features.Jobs
 @using Frontend.Features.Jobs.Models
+@using Frontend.Features.Jobs.Services
 
 @implements Orleans.Streams.IAsyncObserver<JobUpdate>
 
 @inject Orleans.IClusterClient ClusterClient
+@inject IJobService JobService
 
 <JobsListComponent Jobs="@_jobs" />
 
-<button class="btn btn-primary" @onclick="@AddJob" >Add Job</button>
+<button class="btn btn-primary" @onclick="@OnAddJobClick" >Add Job</button>
 
 @code
 {
-    private List<JobModel> _jobs = new List<JobModel>();
+    private readonly List<JobModelView> _jobs = new List<JobModelView>();
 
-    private async Task AddJob()
+    private readonly Dictionary<Guid, int> _jobIndexes = new Dictionary<Guid, int>();
+
+    private async Task OnAddJobClick()
     {
         var job = new JobModel(Guid.NewGuid(), "Job", 0);
 
-        _jobs.Add(job);
+        AddJob(job);
 
         var jobGrain = ClusterClient.GetGrain<IJobGrain>(job.JobId);
-        await jobGrain.Update(new JobDescription(
-            // new Start.Now(),
-            // new Stop.Never(),
-            "test",
-            job.BotsCount,
-            0,
-            0
-        ));
+        await jobGrain.Update(job);
     }
 
     protected override async Task OnInitializedAsync()
     {
+        var allJobs = await JobService.LoadAllJobs();
+        foreach (var job in allJobs)
+        {
+            var modelView = AddJob(job);
+            modelView.Status = JobModelViewStatus.NotActive;
+        }
+
         var sp = ClusterClient.GetStreamProvider(Constants.StreamProviderName);
         var updatesStream = sp.GetStream<JobUpdate>(JobsConstants.JobStreamId, JobsConstants.UpdatesStreamNs);
         await updatesStream.SubscribeAsync(this);
@@ -45,19 +50,64 @@
         await musterStream.OnNextAsync(new JobMuster());
     }
 
-    Task IAsyncObserver<JobUpdate>.OnNextAsync(JobUpdate item, StreamSequenceToken token)
+    private JobModelView AddJob(JobModel job)
     {
-        if (_jobs.FirstOrDefault(m => m.JobId == item.JobId) is {} existingModel)
+        var modelView = new JobModelView(job);
+        _jobs.Add(modelView);
+        _jobIndexes.Add(job.JobId, _jobs.Count - 1);
+
+        return modelView;
+    }
+
+    private JobModelView? TryFindJob(Guid id)
+    {
+        if (_jobIndexes.TryGetValue(id, out var index))
         {
-            // update model
-            existingModel.UpdateCount += 1;
+            return _jobs[index];
+        }
+
+        return null;
+    }
+
+    async Task IAsyncObserver<JobUpdate>.OnNextAsync(JobUpdate item, StreamSequenceToken token)
+    {
+        if (TryFindJob(item.JobId) is {} existingModel)
+        {
+            // nothing
         }
         else
         {
-            _jobs.Add(new JobModel(item.JobId, "Job", 0));
+            if (await JobService.LoadJob(item.JobId) is {} loadedJob)
+            {
+                existingModel = AddJob(loadedJob);
+            }
+            else
+            {
+                throw new Exception($"Job '{item.JobId.ToString()}' not found");
+            }
         }
 
-        return Task.CompletedTask;
+        switch (item)
+        {
+            case JobUpdate.Muster _:
+            {
+                existingModel.Status = JobModelViewStatus.Active;
+
+                break;
+            }
+
+            case JobUpdate.Update update:
+            {
+                break;
+            }
+
+            case JobUpdate.Delete _:
+            {
+                existingModel.Status = JobModelViewStatus.Deleted;
+
+                break;
+            }
+        }
     }
 
     Task IAsyncObserver<JobUpdate>.OnCompletedAsync()

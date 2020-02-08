@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Backend.Contracts;
+using Frontend.Features.Jobs.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -31,15 +32,15 @@ namespace Frontend
         private static IHostBuilder CreateHostBuilder(string[] args, IClusterClient clusterClient)
         {
             return Host.CreateDefaultBuilder(args)
+                .ConfigureServices(services =>
+                {
+                    services.AddSingleton(clusterClient);
+                    services.AddSingleton<IJobService, JobService>();
+                })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     //
                     webBuilder.UseStartup<Startup>();
-                })
-                .ConfigureServices(services =>
-                {
-                    //
-                    services.AddSingleton(clusterClient);
                 });
         }
 

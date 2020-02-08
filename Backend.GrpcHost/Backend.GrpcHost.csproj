@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Backend.MongoStorage\Backend.MongoStorage.csproj" />
     <ProjectReference Include="..\Backend\Backend.csproj" />
   </ItemGroup>
 

@@ -1,4 +1,5 @@
 using Backend.Contracts;
+using Backend.Models.Features.Jobs;
 using Orleans.Streams;
 
 namespace Backend.Features.Jobs
@@ -31,13 +32,21 @@ namespace Backend.Features.Jobs
 
     class JobGrain : Grain, IJobGrain, IAsyncObserver<JobMuster>
     {
+        private readonly IJobStorage _storage;
+
         private bool _deleted;
-        private JobDescription? _description;
+        // private JobDescription? _description;
+        private JobModel? _model;
 
         // private readonly JobGrainConfig _config;
         private IAsyncStream<JobAvailable>? _streamJobAvailable;
         private IAsyncStream<JobUpdate>? _streamJobUpdates;
         private IAsyncStream<JobMuster>? _streamJobMuster;
+
+        public JobGrain(IJobStorage storage)
+        {
+            _storage = storage;
+        }
 
         // public JobGrain(JobGrainConfig config)
         // {
@@ -46,6 +55,9 @@ namespace Backend.Features.Jobs
 
         public override async Task OnActivateAsync()
         {
+            var id = this.GetPrimaryKey();
+            _model = await _storage.Load(id);
+
             var sp = GetStreamProvider(Constants.StreamProviderName);
             _streamJobAvailable = sp.GetStream<JobAvailable>(JobAvailable.StreamId, null);
             _streamJobUpdates = sp.GetStream<JobUpdate>(JobsConstants.JobStreamId, JobsConstants.UpdatesStreamNs);
@@ -69,7 +81,7 @@ namespace Backend.Features.Jobs
             // }
         }
 
-        public async Task Update(JobDescription description)
+        public async Task Update(JobModel model)
         {
             ThrowIfDeleted();
 
@@ -85,11 +97,28 @@ namespace Backend.Features.Jobs
             //         throw new ArgumentOutOfRangeException();
             // }
 
-            _description = description;
+            if (_model is null)
+            {
+                await _storage.Insert(model);
+                _model = model;
 
-            await _streamJobUpdates!.OnNextAsync(new JobUpdate.Update(this.GetPrimaryKey()));
+                await _streamJobMuster!.SubscribeAsync(this);
+            }
+            else
+            {
+                if (await _storage.Update(model))
+                {
+                    _model = model;
 
-            await _streamJobMuster!.SubscribeAsync(this);
+                    await _streamJobUpdates!.OnNextAsync(new JobUpdate.Update(this.GetPrimaryKey()));
+                }
+                else
+                {
+                    throw new Exception($"Error updating job '{this.GetPrimaryKey().ToString()}'");
+                }
+            }
+
+            // _description = description;
         }
 
         public async Task Delete()
@@ -104,10 +133,9 @@ namespace Backend.Features.Jobs
                 }
             }
 
-            // DELETE UPDATE!
             await _streamJobUpdates!.OnNextAsync(new JobUpdate.Delete(this.GetPrimaryKey()));
 
-            _description = null;
+            // _description = null;
             _deleted = true;
 
             DeactivateOnIdle();
