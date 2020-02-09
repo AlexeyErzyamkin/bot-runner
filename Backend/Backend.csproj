@@ -29,6 +29,13 @@
 
     <ItemGroup>
       <Orleans_CodeGenInputs Remove="Domain\World.cs" />
+      <Orleans_CodeGenInputs Remove="Grains\MasterGrain.cs" />
+      <Orleans_CodeGenInputs Remove="Features\World\WorldGrain.cs" />
+      <Orleans_CodeGenInputs Remove="Features\Player\PlayerGrain.cs" />
+      <Orleans_CodeGenInputs Remove="Features\Player\PlayerItems.cs" />
+      <Orleans_CodeGenInputs Remove="Features\Player\PlayerState.cs" />
+      <Orleans_CodeGenInputs Remove="Features\Buildings\BuildOptions.cs" />
+      <Orleans_CodeGenInputs Remove="Features\Buildings\IBuilding.cs" />
     </ItemGroup>
 
 </Project>
