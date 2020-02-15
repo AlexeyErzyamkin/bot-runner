@@ -47,7 +47,7 @@
         await updatesStream.SubscribeAsync(this);
 
         var musterStream = sp.GetStream<JobMuster>(JobsConstants.JobStreamId, JobsConstants.MusterStreamNs);
-        await musterStream.OnNextAsync(new JobMuster());
+        await musterStream.OnNextAsync(JobMuster.Instance);
     }
 
     private async Task OnJobUpdated(JobModelView job)

@@ -12,10 +12,13 @@
             }
         </div>*@
         <div class="card-body">
-            <h6 class="card-title @(IsActive(Job) ? "" : "text-muted")">@Job.Model.Name</h6>
+            @*<h6 class="card-title @(IsActive(Job) ? "" : "text-muted")">@Job.Model.Name</h6>*@
 
-            <EditableInputComponent Label="Name" Edit="@_editMode" @bind-Value="@Job.Model.Name"/>
-            <EditableInputComponent Label="Count" Edit="@_editMode" @bind-Value="@Job.Model.BotsCount"/>
+            <InputText @bind-Value="Job.Model.Name" readonly="@_editMode" />
+            <InputNumber @bind-Value="Job.Model.BotsCount" readonly="@_editMode" />
+
+            @*<EditableInputComponent Label="Name" Edit="@_editMode" @bind-Value="@Job.Model.Name"/>*@
+            @*<EditableInputComponent Label="Count" Edit="@_editMode" @bind-Value="@Job.Model.BotsCount"/>*@
             @* <EditableInputComponent Label="Updates" Value="@Job.UpdateCount"/> *@
         </div>
         <div class="card-footer">

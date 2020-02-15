@@ -3,14 +3,19 @@ using Backend.MongoStorage;
 namespace Backend.GrpcHost
 {
     using Microsoft.Extensions.Hosting;
+    using Microsoft.Extensions.DependencyInjection;
     using Microsoft.AspNetCore.Hosting;
     using Backend;
+    using System.Threading.Tasks;
+    using Backend.Features.Jobs;
 
-    public class Program
+    public static class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Run();
+            await CreateHostBuilder(args)
+                .Build()
+                .RunAsync();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args)
@@ -19,8 +24,16 @@ namespace Backend.GrpcHost
 
             return Host.CreateDefaultBuilder(args)
                 .UseBackend()
-                .UseMongoStorage(config)
-                .ConfigureWebHostDefaults(webBuilder => { webBuilder.UseStartup<Startup>(); });
+                //.UseMongoStorage(config)
+                .ConfigureServices(services =>
+                {
+                    services.AddSingleton<IJobStorage>(new FakeJobStorage());
+                })
+                .ConfigureWebHostDefaults(webBuilder =>
+                {
+                    //
+                    webBuilder.UseStartup<Startup>();
+                });
         }
     }
 

@@ -6,7 +6,6 @@ namespace Backend.MongoStorage
 {
     public interface IMongoStorageConfig
     {
-        // string ConnectionString { get; }
         string Host { get; }
         ushort Port { get; }
         string User { get; }
