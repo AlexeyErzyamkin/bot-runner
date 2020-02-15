@@ -13,7 +13,7 @@
 @inject Orleans.IClusterClient ClusterClient
 @inject IJobService JobService
 
-<JobsListComponent Jobs="@_jobs" />
+<JobsListComponent Jobs="@_jobs" OnJobUpdated="@OnJobUpdated" />
 
 <button class="btn btn-primary" @onclick="@OnAddJobClick" >Add Job</button>
 
@@ -48,6 +48,11 @@
 
         var musterStream = sp.GetStream<JobMuster>(JobsConstants.JobStreamId, JobsConstants.MusterStreamNs);
         await musterStream.OnNextAsync(new JobMuster());
+    }
+
+    private async Task OnJobUpdated(JobModelView job)
+    {
+        await JobService.UpdateJob(job.Model);
     }
 
     private JobModelView AddJob(JobModel job)
@@ -98,6 +103,8 @@
 
             case JobUpdate.Update update:
             {
+                existingModel.Status = JobModelViewStatus.Active;
+
                 break;
             }
 

@@ -12,14 +12,18 @@ namespace Frontend.Features.Jobs.Services
         Task<List<JobModel>> LoadAllJobs();
 
         Task<JobModel?> LoadJob(Guid jobId);
+
+        Task UpdateJob(JobModel model);
     }
 
     public class JobService : IJobService
     {
+        private readonly IClusterClient _clusterClient;
         private readonly IJobLoaderGrain _jobLoader;
 
         public JobService(IClusterClient clusterClient)
         {
+            _clusterClient = clusterClient;
             _jobLoader = clusterClient.GetGrain<IJobLoaderGrain>(0);
         }
 
@@ -31,6 +35,12 @@ namespace Frontend.Features.Jobs.Services
         public Task<JobModel?> LoadJob(Guid jobId)
         {
             return _jobLoader.Load(jobId);
+        }
+
+        public async Task UpdateJob(JobModel model)
+        {
+            var job = _clusterClient.GetGrain<IJobGrain>(model.JobId);
+            await job.Update(model);
         }
     }
 }

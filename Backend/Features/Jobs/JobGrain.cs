@@ -22,15 +22,15 @@ namespace Backend.Features.Jobs
     {
         public static readonly Guid StreamId = new Guid("68F4A2BA-4CBD-4DE6-8069-70A2A5544F23");
 
-        public JobAvailable(IJobGrain job)
+        public JobAvailable(IJobProviderGrain jobProvider)
         {
-            Job = job;
+            JobProvider = jobProvider;
         }
 
-        public IJobGrain Job { get; }
+        public IJobProviderGrain JobProvider { get; }
     }
 
-    class JobGrain : Grain, IJobGrain, IAsyncObserver<JobMuster>
+    class JobGrain : Grain, IJobGrain, IJobProviderGrain, IAsyncObserver<JobMuster>
     {
         private readonly IJobStorage _storage;
 
@@ -63,13 +63,16 @@ namespace Backend.Features.Jobs
             _streamJobUpdates = sp.GetStream<JobUpdate>(JobsConstants.JobStreamId, JobsConstants.UpdatesStreamNs);
 
             _streamJobMuster = sp.GetStream<JobMuster>(JobsConstants.JobStreamId, JobsConstants.MusterStreamNs);
-
-            if (await _streamJobMuster.GetAllSubscriptionHandles() is {} subscriptions)
+            if (await _streamJobMuster.GetAllSubscriptionHandles() is {} subscriptions && subscriptions.Count > 0)
             {
                 foreach (var eachSub in subscriptions)
                 {
                     await eachSub.ResumeAsync(this);
                 }
+            }
+            else
+            {
+                await _streamJobMuster.SubscribeAsync(this);
             }
 
             // if (await _streamJobAvailable.GetAllSubscriptionHandles() is var subscriptions)
@@ -102,7 +105,7 @@ namespace Backend.Features.Jobs
                 await _storage.Insert(model);
                 _model = model;
 
-                await _streamJobMuster!.SubscribeAsync(this);
+                // await _streamJobMuster!.SubscribeAsync(this);
             }
             else
             {
@@ -139,6 +142,11 @@ namespace Backend.Features.Jobs
             _deleted = true;
 
             DeactivateOnIdle();
+        }
+
+        public Task RequestJob()
+        {
+            return Task.CompletedTask;
         }
 
         // public async Task Start()

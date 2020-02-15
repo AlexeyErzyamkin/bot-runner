@@ -5,11 +5,17 @@
 @if (Job != null)
 {
     <div class="card">
-        <div class="card-body">
-            <h6 class="card-title">@Job.Model.Name</h6>
+        @*<div class="card-header">
+            @if (Job.Status == JobModelViewStatus.Active)
+            {
 
-            <EditableInputComponent Label="Name" Edit="@_editMode" Value="@Job.Model.Name"/>
-            <EditableInputComponent Label="Count" Edit="@_editMode" Value="@Job.Model.BotsCount"/>
+            }
+        </div>*@
+        <div class="card-body">
+            <h6 class="card-title @(IsActive(Job) ? "" : "text-muted")">@Job.Model.Name</h6>
+
+            <EditableInputComponent Label="Name" Edit="@_editMode" @bind-Value="@Job.Model.Name"/>
+            <EditableInputComponent Label="Count" Edit="@_editMode" @bind-Value="@Job.Model.BotsCount"/>
             @* <EditableInputComponent Label="Updates" Value="@Job.UpdateCount"/> *@
         </div>
         <div class="card-footer">
@@ -31,10 +37,13 @@
     [Parameter]
     public JobModelView? Job { get; set; }
 
+    [Parameter]
+    public Func<JobModelView, Task>? OnJobUpdated { get; set; }
+
     private bool _editMode;
     // private string? _jobId;
 
-    private JobModelView? _originalJob;
+    // private JobModelView? _originalJob;
 
     protected override void OnParametersSet()
     {
@@ -44,34 +53,37 @@
         // }
     }
 
-    // private string GenId(string idPart)
-    // {
-    //     return $"{_jobId}_{idPart}";
-    // }
-
     private void EnterEditMode()
     {
         _editMode = true;
 
         if (Job != null)
         {
-            _originalJob = Job;
+            // _originalJob = Job;
+
             // Job = new JobModel(_originalJob.JobId, _originalJob.Name, _originalJob.BotsCount);
         }
     }
 
-    private void Save()
+    private async Task Save()
     {
         _editMode = false;
 
-        _originalJob = null;
+        if (Job != null && OnJobUpdated != null)
+        {
+            await OnJobUpdated(Job);
+        }
+
+    // _originalJob = null;
     }
 
     private void Cancel()
     {
         _editMode = false;
 
-        Job = _originalJob;
-        _originalJob = null;
+        // Job = _originalJob;
+        // _originalJob = null;
     }
+
+    private bool IsActive(JobModelView job) => job.Status == JobModelViewStatus.Active;
 }

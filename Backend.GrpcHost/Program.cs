@@ -26,7 +26,14 @@ namespace Backend.GrpcHost
 
     class FakeMongoStorageConfig : IMongoStorageConfig
     {
-        public string ConnectionString => "mongodb://root:12345@localhost:27017";
+        public string Host => "localhost";
+
+        public ushort Port => 27017;
+
+        public string User => "root";
+
+        public string Password => "12345";
+
         public string DatabaseName => "backend";
     }
 }

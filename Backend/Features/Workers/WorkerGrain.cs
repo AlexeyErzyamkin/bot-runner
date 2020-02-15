@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Backend.Contracts;
+using Backend.Contracts.Features.Jobs;
 using Backend.Features.Jobs;
 using Orleans.Streams;
 
@@ -19,7 +20,7 @@ namespace Backend.Features.Workers
         public override async Task OnActivateAsync()
         {
             var sp = GetStreamProvider(Constants.StreamProviderName);
-            _jobsStream = sp.GetStream<JobAvailable>(JobAvailable.StreamId, null);
+            _jobsStream = sp.GetStream<JobAvailable>(JobsConstants.JobStreamId, JobsConstants.JobAvailableStreamNs);
 
             foreach (var eachHandle in await _jobsStream.GetAllSubscriptionHandles())
             {
@@ -45,9 +46,9 @@ namespace Backend.Features.Workers
             throw new NotImplementedException();
         }
 
-        public Task OnNextAsync(JobAvailable item, StreamSequenceToken? token = null)
+        public async Task OnNextAsync(JobAvailable item, StreamSequenceToken? token = null)
         {
-            return Console.Out.WriteLineAsync(nameof(OnNextAsync));
+            await item.JobProvider.RequestJob();
         }
 
         public Task OnCompletedAsync()

@@ -27,7 +27,6 @@ namespace Backend.MongoStorage
         {
             var filter = Builders<MongoDbJobModel>.Filter.Eq(j => j.Model.JobId, id);
 
-            // var jobs = _database.GetCollection<MongoDbJobModel>(CollectionName);
             var result = await Jobs
                 .Find(filter)
                 .FirstOrDefaultAsync();
@@ -39,7 +38,6 @@ namespace Backend.MongoStorage
         {
             var filter = Builders<MongoDbJobModel>.Filter.Empty;
 
-            // var jobs = _database.GetCollection<JobModel>(CollectionName);
             var results = await Jobs
                 .Find(filter)
                 .ToListAsync();
@@ -51,17 +49,28 @@ namespace Backend.MongoStorage
 
         public async Task Insert(JobModel model)
         {
-            // var jobs = _database.GetCollection<JobModel>(CollectionName);
-
             await Jobs.InsertOneAsync(new MongoDbJobModel(model));
         }
 
         public async Task<bool> Update(JobModel model)
         {
-            // var jobs = _database.GetCollection<JobModel>(CollectionName);
             var filter = Builders<MongoDbJobModel>.Filter.Eq(j => j.Model.JobId, model.JobId);
 
-            var replaceResult = await Jobs.ReplaceOneAsync(filter, new MongoDbJobModel(model));
+            var existingModel = await Jobs
+                .Find(filter)
+                .FirstOrDefaultAsync();
+
+            if (existingModel is null)
+            {
+                throw new Exception($"Job '{model.JobId.ToString()}' not found");
+            }
+
+            var replacementModel = new MongoDbJobModel(model)
+            {
+                Id = existingModel.Id
+            };
+
+            var replaceResult = await Jobs.ReplaceOneAsync(filter, replacementModel);
 
             return replaceResult.IsAcknowledged && replaceResult.ModifiedCount > 0;
         }

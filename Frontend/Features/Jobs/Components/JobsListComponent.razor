@@ -6,7 +6,7 @@
 {
     foreach (var model in Jobs)
     {
-        <JobComponent Job="@model" />
+        <JobComponent Job="@model" OnJobUpdated="@OnJobUpdated"/>
     }
 }
 
@@ -14,4 +14,7 @@
 {
     [Parameter]
     public List<JobModelView>? Jobs { get; set; }
+
+    [Parameter]
+    public Func<JobModelView, Task>? OnJobUpdated { get; set; }
 }

@@ -21,5 +21,8 @@
     [Parameter]
     public TValue Value { get; set; } = default;
 
+    [Parameter]
+    public EventCallback<TValue> ValueChanged { get; set; }
+
     private string _id = $"input_{Guid.NewGuid().ToString()}";
 }
