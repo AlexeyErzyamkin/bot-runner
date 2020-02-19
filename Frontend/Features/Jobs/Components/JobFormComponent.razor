@@ -1,0 +1,24 @@
+@using Frontend.Components
+@using Frontend.Features.Jobs.Models
+
+@if (Job != null)
+{
+    <form>
+        <div class="form-group">
+            <FormInputComponent Label="JobId" Edit="@false" Value="@Job.Model.JobId"/>
+            <FormInputComponent Label="Name" Edit="@true" Value="@Job.Model.Name"/>
+            <FormInputComponent Label="Auth Server" Help="Where bots connecting to" Edit="@true" Value="@Job.Model.AuthServer"/>
+            <FormInputComponent Label="Scenario" Help="What scenario bots will execute" Edit="@true" Value="@Job.Model.Scenario"/>
+            <FormInputComponent Label="Scenario Params" Help="Additional scenario params (optional)" Edit="@true" Value="@Job.Model.ScenarioParams"/>
+            <FormInputComponent Label="Bots Count" Help="How many scenarios run at all" Edit="@true" Value="@Job.Model.BotsCount"/>
+            <FormInputComponent Label="Bot Start Delay" Help="Delay before the next scenario starts" Edit="@true" Value="@Job.Model.BotStartDelay"/>
+            <FormInputComponent Label="Max Degree Of Parallelism" Help="How many scenarios run in parallel on each worker" Edit="@true" Value="@Job.Model.MaxDegreeOfParallelism"/>
+        </div>
+    </form>
+}
+
+@code
+{
+    [Parameter]
+    public JobModelView? Job { get; set; }
+}

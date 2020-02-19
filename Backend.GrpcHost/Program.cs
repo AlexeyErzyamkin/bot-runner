@@ -1,3 +1,5 @@
+using System;
+using Backend.Models.Features.Jobs;
 using Backend.MongoStorage;
 
 namespace Backend.GrpcHost
@@ -24,11 +26,16 @@ namespace Backend.GrpcHost
 
             return Host.CreateDefaultBuilder(args)
                 .UseBackend()
-                //.UseMongoStorage(config)
-                .ConfigureServices(services =>
-                {
-                    services.AddSingleton<IJobStorage>(new FakeJobStorage());
-                })
+                .UseMongoStorage(config)
+                // .ConfigureServices(services =>
+                // {
+                //     services.AddSingleton<IJobStorage>(new FakeJobStorage(
+                //         new []
+                //         {
+                //             new JobModel(Guid.NewGuid(), "Fake 1", 3),
+                //             new JobModel(Guid.NewGuid(), "Fake 2", 1),
+                //         }));
+                // })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     //

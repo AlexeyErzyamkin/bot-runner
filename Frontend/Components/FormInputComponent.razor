@@ -1,0 +1,48 @@
+@typeparam TValue
+
+@if (Label != null)
+{
+    <div class="form-group">
+        <label for="@_id">@Label</label>
+        <input type="text" readonly="@(!Edit)" class="form-control" id="@_id" value="@Value" @onchange="@OnValueChanged">
+
+        @if (!string.IsNullOrWhiteSpace(Help))
+        {
+            <small id="@(_id + "help")" class="form-text text-muted">@Help</small>
+        }
+    </div>
+}
+
+@code
+{
+    [Parameter]
+    public string? Label { get; set; }
+
+    [Parameter]
+    public string? Help { get; set; }
+
+    [Parameter]
+    public bool Edit { get; set; }
+
+    [Parameter]
+    public TValue Value { get; set; } = default;
+
+    [Parameter]
+    public EventCallback<TValue> ValueChanged { get; set; }
+
+    private Task OnValueChanged(ChangeEventArgs e)
+    {
+        if (Edit)
+        {
+            Value = (TValue)Convert.ChangeType(e.Value, typeof(TValue));
+
+            return ValueChanged.InvokeAsync(Value);
+        }
+        else
+        {
+            return Task.CompletedTask;
+        }
+    }
+
+    private readonly string _id = $"input_{Guid.NewGuid().ToString()}";
+}

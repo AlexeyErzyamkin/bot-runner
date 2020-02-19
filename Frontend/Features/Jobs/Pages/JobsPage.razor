@@ -13,9 +13,16 @@
 @inject Orleans.IClusterClient ClusterClient
 @inject IJobService JobService
 
-<JobsListComponent Jobs="@_jobs" OnJobUpdated="@OnJobUpdated" />
+<JobsListComponent Jobs="@_jobs" OnJobEdit="@OnJobEdit"/>
 
-<button class="btn btn-primary" @onclick="@OnAddJobClick" >Add Job</button>
+@if (_jobs != null && _jobs.Count > 0)
+{
+    <JobFormComponent Job="@(_jobs[0])"/>
+}
+
+<div class="mt-4">
+    <button class="btn btn-primary" @onclick="@OnAddJobClick">Add Job</button>
+</div>
 
 @code
 {
@@ -25,7 +32,10 @@
 
     private async Task OnAddJobClick()
     {
-        var job = new JobModel(Guid.NewGuid(), "Job", 0);
+        var job = new JobModel
+        {
+            JobId = Guid.NewGuid()
+        };
 
         AddJob(job);
 
@@ -50,9 +60,11 @@
         await musterStream.OnNextAsync(JobMuster.Instance);
     }
 
-    private async Task OnJobUpdated(JobModelView job)
+    private Task OnJobEdit(JobModelView job)
     {
-        await JobService.UpdateJob(job.Model);
+        // await JobService.UpdateJob(job.Model);
+
+        return Task.CompletedTask;
     }
 
     private JobModelView AddJob(JobModel job)
@@ -78,7 +90,7 @@
     {
         if (TryFindJob(item.JobId) is {} existingModel)
         {
-            // nothing
+    // nothing
         }
         else
         {

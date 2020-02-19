@@ -2,13 +2,34 @@
 @using Frontend.Features.Jobs.Components
 @using Frontend.Features.Jobs.Models
 
-@if (Jobs != null)
-{
-    foreach (var model in Jobs)
-    {
-        <JobComponent Job="@model" OnJobUpdated="@OnJobUpdated"/>
-    }
-}
+<div>
+    <table class="table table-hover">
+        <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Name</th>
+            <th scope="col">Scenario</th>
+            <th scope="col"></th>
+        </tr>
+        </thead>
+        <tbody>
+
+        @if (Jobs != null)
+        {
+            @for (int jobIndex = 0, c = Jobs.Count; jobIndex < c; ++jobIndex)
+            {
+                var model = Jobs[jobIndex];
+
+                <tr>
+                    <th scope="row">@(jobIndex + 1)</th>
+                    <JobComponent Job="@model" OnEdit="@OnJobEdit"/>
+                </tr>
+            }
+        }
+
+        </tbody>
+    </table>
+</div>
 
 @code
 {
@@ -16,5 +37,5 @@
     public List<JobModelView>? Jobs { get; set; }
 
     [Parameter]
-    public Func<JobModelView, Task>? OnJobUpdated { get; set; }
+    public Func<JobModelView, Task>? OnJobEdit { get; set; }
 }

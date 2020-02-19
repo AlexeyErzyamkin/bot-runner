@@ -2,10 +2,10 @@
 
 @if (Label != null)
 {
-    <div class="form-group row">
+    <div class="form-group">
         <label for="@_id" class="col-sm-2 col-form-label">@Label</label>
         <div class="col-sm-10">
-            <input type="text" readonly="@(!Edit)" class="form-control" id="@_id" value="@Value">
+            <input type="text" readonly="@(!Edit)" class="form-control" id="@_id" value="@Value" @onchange="@OnValueChanged">
         </div>
     </div>
 }
@@ -16,7 +16,7 @@
     public string? Label { get; set; }
 
     [Parameter]
-    public bool Edit { get; set; } = false;
+    public bool Edit { get; set; }
 
     [Parameter]
     public TValue Value { get; set; } = default;
@@ -24,5 +24,12 @@
     [Parameter]
     public EventCallback<TValue> ValueChanged { get; set; }
 
-    private string _id = $"input_{Guid.NewGuid().ToString()}";
+    private Task OnValueChanged(ChangeEventArgs e)
+    {
+        Value = (TValue)Convert.ChangeType(e.Value, typeof(TValue));
+
+        return ValueChanged.InvokeAsync(Value);
+    }
+
+    private readonly string _id = $"input_{Guid.NewGuid().ToString()}";
 }
