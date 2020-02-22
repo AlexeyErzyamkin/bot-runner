@@ -3,6 +3,7 @@
 @using Backend.Contracts
 @using Backend.Contracts.Features.Jobs
 @using Orleans.Streams
+@using Frontend.Components
 @using Frontend.Features.Jobs.Components
 @using Backend.Models.Features.Jobs
 @using Frontend.Features.Jobs.Models
@@ -12,13 +13,10 @@
 
 @inject Orleans.IClusterClient ClusterClient
 @inject IJobService JobService
+@inject IJSRuntime JsRuntime
 
+<JobEditModalComponent Id="@_editModalId" Job="@_editingJob" OnOkCallback="@OnJobEditComplete" />
 <JobsListComponent Jobs="@_jobs" OnJobEdit="@OnJobEdit"/>
-
-@if (_jobs != null && _jobs.Count > 0)
-{
-    <JobFormComponent Job="@(_jobs[0])"/>
-}
 
 <div class="mt-4">
     <button class="btn btn-primary" @onclick="@OnAddJobClick">Add Job</button>
@@ -29,6 +27,9 @@
     private readonly List<JobModelView> _jobs = new List<JobModelView>();
 
     private readonly Dictionary<Guid, int> _jobIndexes = new Dictionary<Guid, int>();
+    private readonly string _editModalId = $"modal-{Guid.NewGuid().ToString()}";
+
+    private JobModel? _editingJob;
 
     private async Task OnAddJobClick()
     {
@@ -39,8 +40,7 @@
 
         AddJob(job);
 
-        var jobGrain = ClusterClient.GetGrain<IJobGrain>(job.JobId);
-        await jobGrain.Update(job);
+        await JobService.UpdateJob(job);
     }
 
     protected override async Task OnInitializedAsync()
@@ -60,11 +60,27 @@
         await musterStream.OnNextAsync(JobMuster.Instance);
     }
 
-    private Task OnJobEdit(JobModelView job)
+    private async Task OnJobEdit(JobModelView job)
     {
-        // await JobService.UpdateJob(job.Model);
+        _editingJob = job.Model;
 
-        return Task.CompletedTask;
+        StateHasChanged();
+
+        await JsRuntime.InvokeAsync<object>("showModal", new object[] {$"#{_editModalId}"});
+    }
+
+    private async Task OnJobEditComplete()
+    {
+        await JsRuntime.InvokeAsync<object>("hideModal", new object[] {$"#{_editModalId}"});
+
+        StateHasChanged();
+
+        if (_editingJob != null)
+        {
+            await JobService.UpdateJob(_editingJob);
+
+            _editingJob = null;
+        }
     }
 
     private JobModelView AddJob(JobModel job)

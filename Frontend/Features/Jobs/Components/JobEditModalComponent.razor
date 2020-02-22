@@ -1,0 +1,63 @@
+@using Backend.Models.Features.Jobs
+@using Frontend.Components
+
+<ModalComponent Id="@Id" Title="Edit" OnOkCallback="@OnModalOkCallback" OnCloseCallback="@OnModalCloseCallback">
+    <JobFormComponent Job="@_editingJob"/>
+</ModalComponent>
+
+@code
+{
+    [Parameter]
+    public string? Id { get; set; }
+
+    [Parameter]
+    public JobModel? Job { get; set; }
+
+    [Parameter]
+    public Func<Task>? OnOkCallback { get; set; }
+
+    private JobModel? _editingJob;
+
+    protected override void OnParametersSet()
+    {
+        if (Job != null)
+        {
+            _editingJob = new JobModel(
+                Job.JobId,
+                Job.Name,
+                Job.AuthServer,
+                Job.Scenario,
+                Job.ScenarioParams,
+                Job.BotsCount,
+                Job.MaxDegreeOfParallelism,
+                Job.BotStartDelay
+            );
+        }
+    }
+
+    private async Task OnModalOkCallback()
+    {
+        if (Job != null && _editingJob != null)
+        {
+            Job.Name = _editingJob.Name;
+            Job.AuthServer = _editingJob.AuthServer;
+            Job.Scenario = _editingJob.Scenario;
+            Job.ScenarioParams = _editingJob.ScenarioParams;
+            Job.BotsCount = _editingJob.BotsCount;
+            Job.MaxDegreeOfParallelism = _editingJob.MaxDegreeOfParallelism;
+            Job.BotStartDelay = _editingJob.BotStartDelay;
+
+            if (OnOkCallback != null)
+            {
+                await OnOkCallback();
+            }
+        }
+    }
+
+    private Task OnModalCloseCallback()
+    {
+        _editingJob = null;
+
+        return Task.CompletedTask;
+    }
+}

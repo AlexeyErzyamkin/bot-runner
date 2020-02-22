@@ -4,6 +4,22 @@ namespace Backend.Models.Features.Jobs
 {
     public class JobModel
     {
+        public JobModel()
+        {
+        }
+
+        public JobModel(Guid jobId, string? name, string? authServer, string? scenario, string? scenarioParams, int botsCount, int maxDegreeOfParallelism, int botStartDelay)
+        {
+            JobId = jobId;
+            Name = name;
+            AuthServer = authServer;
+            Scenario = scenario;
+            ScenarioParams = scenarioParams;
+            BotsCount = botsCount;
+            MaxDegreeOfParallelism = maxDegreeOfParallelism;
+            BotStartDelay = botStartDelay;
+        }
+
         public Guid JobId { get; set; }
 
         public string? Name { get; set; }
