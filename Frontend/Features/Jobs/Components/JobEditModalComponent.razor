@@ -1,7 +1,7 @@
 @using Backend.Models.Features.Jobs
 @using Frontend.Components
 
-<ModalComponent Id="@Id" Title="Edit" OnOkCallback="@OnModalOkCallback" OnCloseCallback="@OnModalCloseCallback">
+<ModalComponent @ref="@_modal" Id="@Id" Title="Edit" OnOkCallback="@OnModalOkCallback" OnCloseCallback="@OnModalCloseCallback">
     <JobFormComponent Job="@_editingJob"/>
 </ModalComponent>
 
@@ -16,7 +16,12 @@
     [Parameter]
     public Func<Task>? OnOkCallback { get; set; }
 
+    private ModalComponent? _modal;
     private JobModel? _editingJob;
+
+    public Task Show() => _modal!.Show();
+
+    public Task Hide() => _modal!.Hide();
 
     protected override void OnParametersSet()
     {

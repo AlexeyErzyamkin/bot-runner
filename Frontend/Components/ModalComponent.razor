@@ -1,3 +1,5 @@
+@inject IJSRuntime JsRuntime
+
 <div class="modal fade" id="@Id" data-backdrop="static" tabindex="-1" role="dialog" aria-labelledby="@_labelId" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -40,6 +42,30 @@
 
     [Parameter]
     public Func<Task>? OnCloseCallback { get; set; }
+
+    public Task Show()
+    {
+        if (string.IsNullOrEmpty(Id))
+        {
+            return Task.CompletedTask;
+        }
+
+        return JsRuntime
+            .InvokeAsync<object>("showModal", new object[] {$"#{Id}"})
+            .AsTask();
+    }
+
+    public Task Hide()
+    {
+        if (string.IsNullOrEmpty(Id))
+        {
+            return Task.CompletedTask;
+        }
+
+        return JsRuntime
+            .InvokeAsync<object>("hideModal", new object[] {$"#{Id}"})
+            .AsTask();
+    }
 
     protected override void OnParametersSet()
     {

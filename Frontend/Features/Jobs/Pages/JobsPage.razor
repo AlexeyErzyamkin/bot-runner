@@ -15,7 +15,7 @@
 @inject IJobService JobService
 @inject IJSRuntime JsRuntime
 
-<JobEditModalComponent Id="@_editModalId" Job="@_editingJob" OnOkCallback="@OnJobEditComplete" />
+<JobEditModalComponent @ref="@_jobEditModal" Id="@_editModalId" Job="@_editingJob" OnOkCallback="@OnJobEditComplete" />
 <JobsListComponent Jobs="@_jobs" OnJobEdit="@OnJobEdit"/>
 
 <div class="mt-4">
@@ -29,6 +29,7 @@
     private readonly Dictionary<Guid, int> _jobIndexes = new Dictionary<Guid, int>();
     private readonly string _editModalId = $"modal-{Guid.NewGuid().ToString()}";
 
+    private JobEditModalComponent? _jobEditModal;
     private JobModel? _editingJob;
 
     private async Task OnAddJobClick()
@@ -60,18 +61,18 @@
         await musterStream.OnNextAsync(JobMuster.Instance);
     }
 
-    private async Task OnJobEdit(JobModelView job)
+    private Task OnJobEdit(JobModelView job)
     {
         _editingJob = job.Model;
 
         StateHasChanged();
 
-        await JsRuntime.InvokeAsync<object>("showModal", new object[] {$"#{_editModalId}"});
+        return _jobEditModal!.Show();
     }
 
     private async Task OnJobEditComplete()
     {
-        await JsRuntime.InvokeAsync<object>("hideModal", new object[] {$"#{_editModalId}"});
+        await _jobEditModal!.Hide();
 
         StateHasChanged();
 
