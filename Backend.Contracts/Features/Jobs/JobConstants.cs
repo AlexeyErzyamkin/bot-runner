@@ -2,9 +2,9 @@ using System;
 
 namespace Backend.Contracts.Features.Jobs
 {
-    public class JobsConstants
+    public static class JobConstants
     {
-        public static readonly Guid JobStreamId = new Guid("737ABF58-80B6-44B9-BE27-DB723280D3B7");
+        public static readonly Guid StreamId = new Guid("737ABF58-80B6-44B9-BE27-DB723280D3B7");
 
         public const string UpdatesStreamNs = "updates";
         public const string MusterStreamNs = "muster";

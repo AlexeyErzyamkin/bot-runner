@@ -1,4 +1,5 @@
 using Backend.Contracts;
+using Backend.Contracts.Streams;
 using Backend.Models.Features.Jobs;
 using Orleans.Streams;
 
@@ -30,7 +31,7 @@ namespace Backend.Features.Jobs
         public IJobProviderGrain JobProvider { get; }
     }
 
-    class JobGrain : Grain, IJobGrain, IJobProviderGrain, IAsyncObserver<JobMuster>
+    class JobGrain : Grain, IJobGrain, IJobProviderGrain
     {
         private readonly IJobStorage _storage;
 
@@ -39,13 +40,18 @@ namespace Backend.Features.Jobs
         private JobModel? _model;
 
         // private readonly JobGrainConfig _config;
-        private IAsyncStream<JobAvailable>? _streamJobAvailable;
-        private IAsyncStream<JobUpdate>? _streamJobUpdates;
-        private IAsyncStream<JobMuster>? _streamJobMuster;
+        // private IAsyncStream<JobAvailable>? _streamJobAvailable;
+        private StreamProducer<JobUpdate>? _streamJobUpdates;
+        private StreamConsumer<JobMuster>? _streamJobMuster;
 
         public JobGrain(IJobStorage storage)
         {
             _storage = storage;
+
+            // var sp = GetStreamProvider(Constants.StreamProviderName);
+            //
+            // _streamJobUpdates = new StreamProducer<JobUpdate>(sp, JobConstants.StreamId, JobConstants.UpdatesStreamNs);
+            // _streamJobMuster = new StreamConsumer<JobMuster>(sp, JobConstants.StreamId, JobConstants.MusterStreamNs, OnJobMuster);
         }
 
         // public JobGrain(JobGrainConfig config)
@@ -58,22 +64,15 @@ namespace Backend.Features.Jobs
             var id = this.GetPrimaryKey();
             _model = await _storage.Load(id);
 
-            var sp = GetStreamProvider(Constants.StreamProviderName);
-            _streamJobAvailable = sp.GetStream<JobAvailable>(JobAvailable.StreamId, null);
-            _streamJobUpdates = sp.GetStream<JobUpdate>(JobsConstants.JobStreamId, JobsConstants.UpdatesStreamNs);
+            // var sp = GetStreamProvider(Constants.StreamProviderName);
+            // _streamJobAvailable = sp.GetStream<JobAvailable>(JobAvailable.StreamId, null);
 
-            _streamJobMuster = sp.GetStream<JobMuster>(JobsConstants.JobStreamId, JobsConstants.MusterStreamNs);
-            if (await _streamJobMuster.GetAllSubscriptionHandles() is {} subscriptions && subscriptions.Count > 0)
-            {
-                foreach (var eachSub in subscriptions)
-                {
-                    await eachSub.ResumeAsync(this);
-                }
-            }
-            else
-            {
-                await _streamJobMuster.SubscribeAsync(this);
-            }
+            var sp = GetStreamProvider(Constants.StreamProviderName);
+
+            _streamJobUpdates = new StreamProducer<JobUpdate>(sp, JobConstants.StreamId, JobConstants.UpdatesStreamNs);
+            _streamJobMuster = new StreamConsumer<JobMuster>(sp, JobConstants.StreamId, JobConstants.MusterStreamNs, OnJobMuster);
+
+            await _streamJobMuster.ResumeOrSubscribe();
 
             // if (await _streamJobAvailable.GetAllSubscriptionHandles() is var subscriptions)
             // {
@@ -113,7 +112,7 @@ namespace Backend.Features.Jobs
                 {
                     _model = model;
 
-                    await _streamJobUpdates!.OnNextAsync(new JobUpdate.Update(this.GetPrimaryKey()));
+                    await _streamJobUpdates!.Next(new JobUpdate.Update(this.GetPrimaryKey()));
                 }
                 else
                 {
@@ -128,15 +127,8 @@ namespace Backend.Features.Jobs
         {
             ThrowIfDeleted();
 
-            if (await _streamJobMuster!.GetAllSubscriptionHandles() is {} subscriptions)
-            {
-                foreach (var eachSub in subscriptions)
-                {
-                    await eachSub.UnsubscribeAsync();
-                }
-            }
-
-            await _streamJobUpdates!.OnNextAsync(new JobUpdate.Delete(this.GetPrimaryKey()));
+            await _streamJobMuster!.Unsubscribe();
+            await _streamJobUpdates!.Next(new JobUpdate.Delete(this.GetPrimaryKey()));
 
             // _description = null;
             _deleted = true;
@@ -156,24 +148,7 @@ namespace Backend.Features.Jobs
         //     await _streamJobAvailable!.OnNextAsync(model);
         // }
 
-        async Task IAsyncObserver<JobMuster>.OnNextAsync(JobMuster item, StreamSequenceToken token)
-        {
-            if (!_deleted)
-            {
-                await _streamJobUpdates!.OnNextAsync(new JobUpdate.Muster(this.GetPrimaryKey()));
-            }
-        }
-
-        Task IAsyncObserver<JobMuster>.OnCompletedAsync()
-        {
-            // throw new NotImplementedException();
-            return Task.CompletedTask;
-        }
-
-        Task IAsyncObserver<JobMuster>.OnErrorAsync(Exception ex)
-        {
-            throw new NotImplementedException();
-        }
+        private Task OnJobMuster(JobMuster _) => _streamJobUpdates!.Next(new JobUpdate.Muster(this.GetPrimaryKey()));
 
         private void ThrowIfDeleted()
         {

@@ -2,6 +2,7 @@
 
 @using Backend.Contracts
 @using Backend.Contracts.Features.Jobs
+@using Backend.Contracts.Streams
 @using Orleans.Streams
 @using Frontend.Components
 @using Frontend.Features.Jobs.Components
@@ -9,13 +10,13 @@
 @using Frontend.Features.Jobs.Models
 @using Frontend.Features.Jobs.Services
 
-@implements Orleans.Streams.IAsyncObserver<JobUpdate>
+@* @implements Orleans.Streams.IAsyncObserver<JobUpdate> *@
+@implements IAsyncDisposable
 
 @inject Orleans.IClusterClient ClusterClient
 @inject IJobService JobService
-@inject IJSRuntime JsRuntime
 
-<JobEditModalComponent @ref="@_jobEditModal" Id="@_editModalId" Job="@_editingJob" OnOkCallback="@OnJobEditComplete" />
+<JobEditModalComponent @ref="@_jobEditModal" Id="@_editModalId" Job="@_editingJob" OnOkCallback="@OnJobEditComplete"/>
 <JobsListComponent Jobs="@_jobs" OnJobEdit="@OnJobEdit"/>
 
 <div class="mt-4">
@@ -29,20 +30,19 @@
     private readonly Dictionary<Guid, int> _jobIndexes = new Dictionary<Guid, int>();
     private readonly string _editModalId = $"modal-{Guid.NewGuid().ToString()}";
 
+    private StreamConsumer<JobUpdate>? _streamUpdates;
+    private StreamProducer<JobMuster>? _streamMuster;
+
     private JobEditModalComponent? _jobEditModal;
     private JobModel? _editingJob;
 
-    private async Task OnAddJobClick()
-    {
-        var job = new JobModel
-        {
-            JobId = Guid.NewGuid()
-        };
-
-        AddJob(job);
-
-        await JobService.UpdateJob(job);
-    }
+    // public JobsPage()
+    // {
+    //     var sp = ClusterClient.GetStreamProvider(Constants.StreamProviderName);
+    //
+    //     _streamUpdates = new StreamConsumer<JobUpdate>(sp, JobConstants.StreamId, JobConstants.UpdatesStreamNs, OnUpdate);
+    //     _streamMuster = new StreamProducer<JobMuster>(sp, JobConstants.StreamId, JobConstants.MusterStreamNs);
+    // }
 
     protected override async Task OnInitializedAsync()
     {
@@ -54,11 +54,33 @@
         }
 
         var sp = ClusterClient.GetStreamProvider(Constants.StreamProviderName);
-        var updatesStream = sp.GetStream<JobUpdate>(JobsConstants.JobStreamId, JobsConstants.UpdatesStreamNs);
-        await updatesStream.SubscribeAsync(this);
 
-        var musterStream = sp.GetStream<JobMuster>(JobsConstants.JobStreamId, JobsConstants.MusterStreamNs);
-        await musterStream.OnNextAsync(JobMuster.Instance);
+        _streamUpdates = new StreamConsumer<JobUpdate>(sp, JobConstants.StreamId, JobConstants.UpdatesStreamNs, i => InvokeAsync(() => OnUpdate(i)));
+        await _streamUpdates.Subscribe();
+
+        _streamMuster = new StreamProducer<JobMuster>(sp, JobConstants.StreamId, JobConstants.MusterStreamNs);
+
+        await _streamMuster.Next(JobMuster.Instance);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_streamUpdates != null)
+        {
+            await _streamUpdates.Unsubscribe();
+        }
+    }
+
+    private async Task OnAddJobClick()
+    {
+        var job = new JobModel
+        {
+            JobId = Guid.NewGuid()
+        };
+
+        AddJob(job);
+
+        await JobService.UpdateJob(job);
     }
 
     private Task OnJobEdit(JobModelView job)
@@ -103,56 +125,103 @@
         return null;
     }
 
-    async Task IAsyncObserver<JobUpdate>.OnNextAsync(JobUpdate item, StreamSequenceToken token)
+    private void ReplaceJob(JobModel job)
     {
-        if (TryFindJob(item.JobId) is {} existingModel)
+        if (_jobIndexes.TryGetValue(job.JobId, out var index))
         {
-    // nothing
+            var oldJob = _jobs[index];
+            _jobs[index] = new JobModelView(job)
+            {
+                Status = oldJob.Status
+            };
         }
         else
         {
-            if (await JobService.LoadJob(item.JobId) is {} loadedJob)
-            {
-                existingModel = AddJob(loadedJob);
-            }
-            else
-            {
-                throw new Exception($"Job '{item.JobId.ToString()}' not found");
-            }
+            AddJob(job);
         }
+    }
+
+    private async Task OnUpdate(JobUpdate item)
+    {
+    //     if (TryFindJob(item.JobId) is {} existingModel)
+    //     {
+    // // nothing
+    //     }
+    //     else
+    //     {
+    //         if (await JobService.LoadJob(item.JobId) is {} loadedJob)
+    //         {
+    //             existingModel = AddJob(loadedJob);
+    //         }
+    //         else
+    //         {
+    //             throw new Exception($"Job '{item.JobId.ToString()}' not found");
+    //         }
+    //     }
 
         switch (item)
         {
             case JobUpdate.Muster _:
             {
-                existingModel.Status = JobModelViewStatus.Active;
+                if (await JobService.LoadJob(item.JobId) is {} loadedJob)
+                {
+                    ReplaceJob(loadedJob);
+                }
+                else
+                {
+                    throw new Exception($"Job '{item.JobId.ToString()}' not found");
+                }
+
+                // existingModel.Status = JobModelViewStatus.Active;
 
                 break;
             }
 
             case JobUpdate.Update update:
             {
-                existingModel.Status = JobModelViewStatus.Active;
+                // existingModel.Status = JobModelViewStatus.Active;
+
+                if (await JobService.LoadJob(item.JobId) is {} loadedJob)
+                {
+                    ReplaceJob(loadedJob);
+                }
+                else
+                {
+                    throw new Exception($"Job '{item.JobId.ToString()}' not found");
+                }
 
                 break;
             }
 
             case JobUpdate.Delete _:
             {
-                existingModel.Status = JobModelViewStatus.Deleted;
+                // existingModel.Status = JobModelViewStatus.Deleted;
+
+                if (_jobIndexes.TryGetValue(item.JobId, out var index))
+                {
+                    _jobs.RemoveAt(index);
+                    _jobIndexes.Remove(item.JobId);
+                }
 
                 break;
             }
         }
+
+        StateHasChanged();
     }
 
-    Task IAsyncObserver<JobUpdate>.OnCompletedAsync()
-    {
-        throw new NotImplementedException();
-    }
-
-    Task IAsyncObserver<JobUpdate>.OnErrorAsync(Exception ex)
-    {
-        throw new NotImplementedException();
-    }
+    // private async Task UpdateJob(Guid jobId)
+    // {
+    //     if (await JobService.LoadJob(jobId) is {} loadedJob)
+    //     {
+    //         if (TryFindJob(jobId) is {} existingJob)
+    //         {
+    //             existingJob.
+    //         }
+    //     }
+    //     else
+    //     {
+    //         throw new Exception($"Job '{jobId.ToString()}' not found");
+    //     }
+    // }
 }
