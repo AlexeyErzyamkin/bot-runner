@@ -6,6 +6,7 @@ using Backend.Contracts;
 using Backend.Contracts.Features.Jobs;
 using Backend.Contracts.Streams;
 using Backend.Features.Jobs;
+using Backend.Models.Features.Workers;
 
 namespace Backend.Features.Workers
 {
@@ -17,22 +18,31 @@ namespace Backend.Features.Workers
         // private IAsyncStream<JobAvailable>? _jobsStream;
         // private StreamSubscriptionHandle<JobAvailable>? _jobStreamHandle;
 
-        private readonly StreamConsumer<JobAvailable> _streamConsumerJobAvailable;
+        private StreamConsumer<WorkerMuster>? _streamMuster;
+        private StreamProducer<WorkerUpdate>? _streamUpdates;
 
-        public WorkerGrain()
-        {
-            var sp = GetStreamProvider(Constants.StreamProviderName);
-            _streamConsumerJobAvailable = new StreamConsumer<JobAvailable>(sp, JobConstants.StreamId, JobConstants.JobAvailableStreamNs,
-                async i => await i.JobProvider.RequestJob(),
-                () => Task.CompletedTask,
-                ex => Task.CompletedTask);
-        }
+        private WorkerModel? _model;
+
+        // public WorkerGrain()
+        // {
+        //     var sp = GetStreamProvider(Constants.StreamProviderName);
+        //     _streamConsumerJobAvailable = new StreamConsumer<JobAvailable>(sp, JobConstants.StreamId, JobConstants.JobAvailableStreamNs,
+        //         async i => await i.JobProvider.RequestJob(),
+        //         () => Task.CompletedTask,
+        //         ex => Task.CompletedTask);
+        // }
 
         public override async Task OnActivateAsync()
         {
-            await _streamConsumerJobAvailable.Resume();
+            var sp = GetStreamProvider(Constants.StreamProviderName);
 
-            // var sp = GetStreamProvider(Constants.StreamProviderName);
+            _streamMuster = new StreamConsumer<WorkerMuster>(sp, WorkerConstants.StreamId, WorkerConstants.StreamNs.Muster, OnMuster);
+            await _streamMuster.ResumeOrSubscribe();
+
+            _streamUpdates = new StreamProducer<WorkerUpdate>(sp, WorkerConstants.StreamId, WorkerConstants.StreamNs.Update);
+
+            // _streamConsumerJobAvailable = new StreamConsumer<JobAvailable>(sp, JobConstants.StreamId, JobConstants.JobAvailableStreamNs,);
+
             // _jobsStream = sp.GetStream<JobAvailable>(JobConstants.StreamId, JobConstants.JobAvailableStreamNs);
             //
             // foreach (var eachHandle in await _jobsStream.GetAllSubscriptionHandles())
@@ -43,25 +53,30 @@ namespace Backend.Features.Workers
 
         public async Task Register()
         {
-            await _streamConsumerJobAvailable.Subscribe();
+            _model = new WorkerModel(this.GetPrimaryKey(), "");
 
-            // await _jobsStream!.SubscribeAsync(this);
+            await _streamUpdates!.Next(new WorkerUpdate.Update(this.GetPrimaryKey(), _model));
         }
 
         public async Task Unregister()
         {
-            await _streamConsumerJobAvailable.Unsubscribe();
+            _model = null;
 
-            // foreach (var eachHandle in await _jobsStream!.GetAllSubscriptionHandles())
-            // {
-            //     await eachHandle.UnsubscribeAsync();
-            // }
+            await _streamUpdates!.Next(new WorkerUpdate.Delete(this.GetPrimaryKey()));
         }
 
-        public ValueTask<WorkerStatus> UpdateStatus()
+        private async Task OnMuster(WorkerMuster muster)
         {
-            throw new NotImplementedException();
+            if (_model != null)
+            {
+                await _streamUpdates!.Next(new WorkerUpdate.Update(this.GetPrimaryKey(), _model));
+            }
         }
+
+        // public ValueTask<WorkerStatus> UpdateStatus()
+        // {
+        //     throw new NotImplementedException();
+        // }
 
         // public async Task OnNextAsync(JobAvailable item, StreamSequenceToken? token = null)
         // {

@@ -1,0 +1,13 @@
+@using Backend.Models.Features.Workers
+
+@if (Worker != null)
+{
+     <td>@Worker.Address</td>
+     <td>@Worker.WorkerId</td>
+}
+
+@code
+{
+    [Parameter]
+    public WorkerModel? Worker { get; set; }
+}

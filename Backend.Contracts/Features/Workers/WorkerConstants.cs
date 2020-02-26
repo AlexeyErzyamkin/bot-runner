@@ -8,7 +8,9 @@ namespace Backend.Contracts.Features.Workers
 
         public static class StreamNs
         {
-            public const string FreeWorker = "fw";
+            public const string Muster = "muster";
+
+            public const string Update = "update";
         }
     }
 }

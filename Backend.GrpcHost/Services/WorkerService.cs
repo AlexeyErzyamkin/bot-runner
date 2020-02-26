@@ -43,7 +43,7 @@ namespace Backend.GrpcHost.Services
             {
                 case AcknowledgeResult.Ok ok:
                 {
-                    await ok.Worker.UpdateStatus();
+                    // await ok.Worker.UpdateStatus();
 
                     return new StatusResponse
                     {

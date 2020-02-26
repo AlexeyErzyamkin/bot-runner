@@ -15,14 +15,16 @@ namespace Worker
             using var channel = GrpcChannel.ForAddress("https://localhost:5001");
             var client = new WorkerProtocol.WorkerProtocolClient(channel);
 
-            while (true)
-            {
-                var response = await client.UpdateStatusAsync(new StatusRequest { Id = InstanceId });
+            await client.RegisterAsync(new RegisterRequest());
 
-                // Console.WriteLine($"R: {response.Message}");
-
-                await Task.Delay(TimeSpan.FromSeconds(10));
-            }
+            // while (true)
+            // {
+            //     var response = await client.UpdateStatusAsync(new StatusRequest { Id = InstanceId });
+            //
+            //     // Console.WriteLine($"R: {response.Message}");
+            //
+            //     await Task.Delay(TimeSpan.FromSeconds(10));
+            // }
         }
     }
 }

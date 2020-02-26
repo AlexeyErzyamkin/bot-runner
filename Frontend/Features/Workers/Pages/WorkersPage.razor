@@ -1,10 +1,86 @@
 ﻿@page "/workers"
 
+@using Backend.Contracts
+@using Backend.Contracts.Features.Workers
+@using Backend.Contracts.Streams
+@using Backend.Models.Features.Workers
 @using Frontend.Features.Workers.Components
+@using Orleans
 
-<WorkerListComponent />
+@inject IClusterClient ClusterClient
+
+@implements IAsyncDisposable
+
+<WorkerListComponent Workers="@_workers" />
 
 @code
 {
+    private readonly List<WorkerModel> _workers = new List<WorkerModel>();
 
+    private StreamConsumer<WorkerUpdate>? _streamUpdates;
+    private StreamProducer<WorkerMuster>? _streamMuster;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var sp = ClusterClient.GetStreamProvider(Constants.StreamProviderName);
+
+        _streamUpdates = new StreamConsumer<WorkerUpdate>(sp, WorkerConstants.StreamId, WorkerConstants.StreamNs.Update, u => InvokeAsync(() => OnUpdate(u)));
+        await _streamUpdates.Subscribe();
+
+        _streamMuster = new StreamProducer<WorkerMuster>(sp, WorkerConstants.StreamId, WorkerConstants.StreamNs.Muster);
+        await _streamMuster.Next(WorkerMuster.Instance);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_streamUpdates != null)
+        {
+            await _streamUpdates.Unsubscribe();
+        }
+    }
+
+    private Task OnUpdate(WorkerUpdate update)
+    {
+        switch (update)
+        {
+            case WorkerUpdate.Update typed:
+            {
+                bool found = false;
+                for (int i = 0, c = _workers.Count; i < c; ++i)
+                {
+                    if (_workers[i].WorkerId == typed.WorkerId)
+                    {
+                        _workers[i] = typed.Model;
+                        found = true;
+
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    _workers.Add(typed.Model);
+                }
+
+                break;
+            }
+
+            case WorkerUpdate.Delete typed:
+            {
+                if (_workers.FirstOrDefault(w => w.WorkerId == typed.WorkerId) is {} worker)
+                {
+                    _workers.Remove(worker);
+                }
+
+                break;
+            }
+
+            default:
+                throw new ArgumentOutOfRangeException(nameof(update));
+        }
+
+        StateHasChanged();
+
+        return Task.CompletedTask;
+    }
 }

@@ -32,9 +32,4 @@ namespace Backend.Contracts.Features.Jobs
             }
         }
     }
-
-    public class JobMuster
-    {
-        public static JobMuster Instance { get; } = new JobMuster();
-    }
 }

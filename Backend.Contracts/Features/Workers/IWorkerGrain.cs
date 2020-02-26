@@ -28,6 +28,6 @@
 
         Task Unregister();
 
-        ValueTask<WorkerStatus> UpdateStatus();
+        // ValueTask<WorkerStatus> UpdateStatus();
     }
 }
