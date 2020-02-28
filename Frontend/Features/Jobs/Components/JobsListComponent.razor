@@ -22,7 +22,14 @@
 
                 <tr>
                     <th scope="row">@(jobIndex + 1)</th>
-                    <JobComponent Job="@model" OnEdit="@OnJobEdit"/>
+                    @if (OnJobEdit is null)
+                    {
+                        <JobComponent Job="@model"/>
+                    }
+                    else
+                    {
+                        <JobComponent Job="@model" OnEdit="@OnJobEdit"/>
+                    }
                 </tr>
             }
         }

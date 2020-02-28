@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Orleans.Streams;
 
@@ -19,6 +20,8 @@ namespace Backend.Contracts.Streams
 
         private readonly IAsyncStream<T> _stream;
 
+        private StreamSubscriptionHandle<T>? _subscriptionHandle;
+
         public StreamConsumer(
             IStreamProvider streamProvider,
             Guid streamId,
@@ -33,19 +36,23 @@ namespace Backend.Contracts.Streams
             _stream = streamProvider.GetStream<T>(streamId, streamNs);
         }
 
+        public bool IsSubscribed => _subscriptionHandle != null;
+
         public async Task Subscribe()
         {
-            await _stream.SubscribeAsync(this);
+            if (_subscriptionHandle != null)
+            {
+                throw new InvalidOperationException(ErrorString_MultipleSubscriptionsIsNotAllowed());
+            }
+
+            _subscriptionHandle = await _stream.SubscribeAsync(this);
         }
 
         public async Task<bool> Unsubscribe()
         {
-            if (await _stream.GetAllSubscriptionHandles() is {} subscriptions && subscriptions.Count > 0)
+            if (_subscriptionHandle != null)
             {
-                foreach (var subscription in subscriptions)
-                {
-                    await subscription.UnsubscribeAsync();
-                }
+                await _subscriptionHandle.UnsubscribeAsync();
 
                 return true;
             }
@@ -55,12 +62,17 @@ namespace Backend.Contracts.Streams
 
         public async Task<bool> Resume()
         {
+            if (_subscriptionHandle != null)
+            {
+                return true;
+            }
+
             if (await _stream.GetAllSubscriptionHandles() is {} subscriptions && subscriptions.Count > 0)
             {
-                foreach (var subscription in subscriptions)
-                {
-                    await subscription.ResumeAsync(this);
-                }
+                Debug.Assert(subscriptions.Count == 1, ErrorString_MultipleSubscriptionsIsNotAllowed());
+
+                _subscriptionHandle = subscriptions[0];
+                await _subscriptionHandle.ResumeAsync(this);
 
                 return true;
             }
@@ -73,5 +85,8 @@ namespace Backend.Contracts.Streams
         Task IAsyncObserver<T>.OnCompletedAsync() => _onCompleted();
 
         Task IAsyncObserver<T>.OnErrorAsync(Exception ex) => _onError(ex);
+
+        private string ErrorString_MultipleSubscriptionsIsNotAllowed()
+            => $"Multiple subscriptions is not allowed ({_stream.ToInfoString()})";
     }
 }

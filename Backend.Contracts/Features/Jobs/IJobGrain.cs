@@ -86,5 +86,9 @@ namespace Backend.Contracts.Features.Jobs
     public interface IJobGrain : IGrainWithGuidKey
     {
         Task Update(JobModel model);
+
+        Task Start();
+
+        Task Stop();
     }
 }

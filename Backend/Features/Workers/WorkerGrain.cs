@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Backend.Contracts;
 using Backend.Contracts.Features.Jobs;
 using Backend.Contracts.Streams;
@@ -13,47 +10,40 @@ namespace Backend.Features.Workers
     using Orleans;
     using Backend.Contracts.Features.Workers;
 
-    class WorkerGrain : Grain, IWorkerGrain //, IAsyncObserver<JobAvailable>
+    class WorkerGrain : Grain, IWorkerGrain
     {
-        // private IAsyncStream<JobAvailable>? _jobsStream;
-        // private StreamSubscriptionHandle<JobAvailable>? _jobStreamHandle;
-
         private StreamConsumer<WorkerMuster>? _streamMuster;
         private StreamProducer<WorkerUpdate>? _streamUpdates;
+        private StreamConsumer<JobAvailable>? _streamJobAvailable;
 
         private WorkerModel? _model;
-
-        // public WorkerGrain()
-        // {
-        //     var sp = GetStreamProvider(Constants.StreamProviderName);
-        //     _streamConsumerJobAvailable = new StreamConsumer<JobAvailable>(sp, JobConstants.StreamId, JobConstants.JobAvailableStreamNs,
-        //         async i => await i.JobProvider.RequestJob(),
-        //         () => Task.CompletedTask,
-        //         ex => Task.CompletedTask);
-        // }
 
         public override async Task OnActivateAsync()
         {
             var sp = GetStreamProvider(Constants.StreamProviderName);
 
-            _streamMuster = new StreamConsumer<WorkerMuster>(sp, WorkerConstants.StreamId, WorkerConstants.StreamNs.Muster, OnMuster);
-            await _streamMuster.ResumeOrSubscribe();
-
             _streamUpdates = new StreamProducer<WorkerUpdate>(sp, WorkerConstants.StreamId, WorkerConstants.StreamNs.Update);
 
-            // _streamConsumerJobAvailable = new StreamConsumer<JobAvailable>(sp, JobConstants.StreamId, JobConstants.JobAvailableStreamNs,);
+            _streamMuster = new StreamConsumer<WorkerMuster>(sp, WorkerConstants.StreamId, WorkerConstants.StreamNs.Muster, OnMuster);
+            await _streamMuster.Resume();
 
-            // _jobsStream = sp.GetStream<JobAvailable>(JobConstants.StreamId, JobConstants.JobAvailableStreamNs);
-            //
-            // foreach (var eachHandle in await _jobsStream.GetAllSubscriptionHandles())
-            // {
-            //     await eachHandle.ResumeAsync(this);
-            // }
+            _streamJobAvailable = new StreamConsumer<JobAvailable>(sp, JobConstants.StreamId, JobConstants.JobAvailableStreamNs, OnJobAvailable);
+            await _streamJobAvailable.Resume();
         }
 
         public async Task Register()
         {
             _model = new WorkerModel(this.GetPrimaryKey(), "");
+
+            if (!_streamMuster!.IsSubscribed)
+            {
+                await _streamMuster!.Subscribe();
+            }
+
+            if (!_streamJobAvailable!.IsSubscribed)
+            {
+                await _streamJobAvailable!.Subscribe();
+            }
 
             await _streamUpdates!.Next(new WorkerUpdate.Update(this.GetPrimaryKey(), _model));
         }
@@ -63,6 +53,11 @@ namespace Backend.Features.Workers
             _model = null;
 
             await _streamUpdates!.Next(new WorkerUpdate.Delete(this.GetPrimaryKey()));
+
+            await _streamMuster!.Unsubscribe();
+            await _streamJobAvailable!.Unsubscribe();
+
+            DeactivateOnIdle();
         }
 
         private async Task OnMuster(WorkerMuster muster)
@@ -73,24 +68,9 @@ namespace Backend.Features.Workers
             }
         }
 
-        // public ValueTask<WorkerStatus> UpdateStatus()
-        // {
-        //     throw new NotImplementedException();
-        // }
-
-        // public async Task OnNextAsync(JobAvailable item, StreamSequenceToken? token = null)
-        // {
-        //     await item.JobProvider.RequestJob();
-        // }
-        //
-        // public Task OnCompletedAsync()
-        // {
-        //     return Console.Out.WriteLineAsync(nameof(OnCompletedAsync));
-        // }
-        //
-        // public Task OnErrorAsync(Exception ex)
-        // {
-        //     return Console.Out.WriteLineAsync(nameof(OnErrorAsync));
-        // }
+        private async Task OnJobAvailable(JobAvailable jobAvailable)
+        {
+            var result = await jobAvailable.JobProvider.RequestJob();
+        }
     }
 }

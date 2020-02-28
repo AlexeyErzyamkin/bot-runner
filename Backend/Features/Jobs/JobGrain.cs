@@ -1,7 +1,6 @@
 using Backend.Contracts;
 using Backend.Contracts.Streams;
 using Backend.Models.Features.Jobs;
-using Orleans.Streams;
 
 namespace Backend.Features.Jobs
 {
@@ -10,18 +9,9 @@ namespace Backend.Features.Jobs
     using Orleans;
     using Backend.Contracts.Features.Jobs;
 
-    // class JobGrainConfig
-    // {
-    //
-    //
-    //     public string StreamProviderName { get; }
-    //
-    //     public Guid StreamId { get; }
-    // }
-
     class JobAvailable
     {
-        public static readonly Guid StreamId = new Guid("68F4A2BA-4CBD-4DE6-8069-70A2A5544F23");
+        // public static readonly Guid StreamId = new Guid("68F4A2BA-4CBD-4DE6-8069-70A2A5544F23");
 
         public JobAvailable(IJobProviderGrain jobProvider)
         {
@@ -36,75 +26,42 @@ namespace Backend.Features.Jobs
         private readonly IJobStorage _storage;
 
         private bool _deleted;
-        // private JobDescription? _description;
         private JobModel? _model;
 
-        // private readonly JobGrainConfig _config;
-        // private IAsyncStream<JobAvailable>? _streamJobAvailable;
         private StreamProducer<JobUpdate>? _streamJobUpdates;
         private StreamConsumer<JobMuster>? _streamJobMuster;
+        private StreamProducer<JobAvailable>? _streamJobAvailable;
+
+        // TODO Need to be persisted
+        private Guid? _instanceId;
 
         public JobGrain(IJobStorage storage)
         {
             _storage = storage;
-
-            // var sp = GetStreamProvider(Constants.StreamProviderName);
-            //
-            // _streamJobUpdates = new StreamProducer<JobUpdate>(sp, JobConstants.StreamId, JobConstants.UpdatesStreamNs);
-            // _streamJobMuster = new StreamConsumer<JobMuster>(sp, JobConstants.StreamId, JobConstants.MusterStreamNs, OnJobMuster);
         }
-
-        // public JobGrain(JobGrainConfig config)
-        // {
-        //     _config = config;
-        // }
 
         public override async Task OnActivateAsync()
         {
             var id = this.GetPrimaryKey();
             _model = await _storage.Load(id);
 
-            // var sp = GetStreamProvider(Constants.StreamProviderName);
-            // _streamJobAvailable = sp.GetStream<JobAvailable>(JobAvailable.StreamId, null);
-
             var sp = GetStreamProvider(Constants.StreamProviderName);
 
             _streamJobUpdates = new StreamProducer<JobUpdate>(sp, JobConstants.StreamId, JobConstants.UpdatesStreamNs);
             _streamJobMuster = new StreamConsumer<JobMuster>(sp, JobConstants.StreamId, JobConstants.MusterStreamNs, OnJobMuster);
+            _streamJobAvailable = new StreamProducer<JobAvailable>(sp, JobConstants.StreamId, JobConstants.JobAvailableStreamNs);
 
             await _streamJobMuster.ResumeOrSubscribe();
-
-            // if (await _streamJobAvailable.GetAllSubscriptionHandles() is var subscriptions)
-            // {
-            //     foreach (var eachSub in subscriptions)
-            //     {
-            //         await eachSub.ResumeAsync();
-            //     }
-            // }
         }
 
         public async Task Update(JobModel model)
         {
             ThrowIfDeleted();
 
-            // switch (description.Start)
-            // {
-            //     case Start.After after:
-            //         break;
-            //     case Start.AtTime atTime:
-            //         break;
-            //     case Start.Now now:
-            //         break;
-            //     default:
-            //         throw new ArgumentOutOfRangeException();
-            // }
-
             if (_model is null)
             {
                 await _storage.Insert(model);
                 _model = model;
-
-                // await _streamJobMuster!.SubscribeAsync(this);
             }
             else
             {
@@ -119,8 +76,6 @@ namespace Backend.Features.Jobs
                     throw new Exception($"Error updating job '{this.GetPrimaryKey().ToString()}'");
                 }
             }
-
-            // _description = description;
         }
 
         public async Task Delete()
@@ -130,25 +85,38 @@ namespace Backend.Features.Jobs
             await _streamJobMuster!.Unsubscribe();
             await _streamJobUpdates!.Next(new JobUpdate.Delete(this.GetPrimaryKey()));
 
-            // _description = null;
             _deleted = true;
 
             DeactivateOnIdle();
         }
 
-        public Task RequestJob()
+        public async Task Start()
         {
-            return Task.CompletedTask;
+            _instanceId = Guid.NewGuid();
+
+            await _streamJobAvailable!.Next(new JobAvailable(this));
         }
 
-        // public async Task Start()
-        // {
-        //     var self = GrainReference.AsReference<IJobGrain>();
-        //     var model = new JobAvailable(self);
-        //     await _streamJobAvailable!.OnNextAsync(model);
-        // }
+        public Task Stop()
+        {
+            _instanceId = default;
 
-        private Task OnJobMuster(JobMuster _) => _streamJobUpdates!.Next(new JobUpdate.Muster(this.GetPrimaryKey()));
+            throw new NotImplementedException();
+        }
+
+        // TODO Replace response with discriminated union
+        public Task<JobInstanceModel> RequestJob()
+        {
+            if (_instanceId is {} instanceId)
+            {
+                return Task.FromResult(new JobInstanceModel(instanceId));
+            }
+
+            throw new InvalidOperationException("Job not started");
+        }
+
+        private Task OnJobMuster(JobMuster _)
+            => _streamJobUpdates!.Next(new JobUpdate.Muster(this.GetPrimaryKey()));
 
         private void ThrowIfDeleted()
         {
