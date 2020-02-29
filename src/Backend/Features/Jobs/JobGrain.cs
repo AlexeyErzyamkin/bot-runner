@@ -1,6 +1,7 @@
 using Backend.Contracts;
 using Backend.Contracts.Streams;
 using Backend.Models.Features.Jobs;
+using Microsoft.Extensions.Logging;
 
 namespace Backend.Features.Jobs
 {
@@ -24,6 +25,7 @@ namespace Backend.Features.Jobs
     class JobGrain : Grain, IJobGrain, IJobProviderGrain
     {
         private readonly IJobStorage _storage;
+        private readonly ILogger<JobGrain> _logger;
 
         private bool _deleted;
         private JobModel? _model;
@@ -35,9 +37,10 @@ namespace Backend.Features.Jobs
         // TODO Need to be persisted
         private Guid? _instanceId;
 
-        public JobGrain(IJobStorage storage)
+        public JobGrain(IJobStorage storage, ILogger<JobGrain> logger)
         {
             _storage = storage;
+            _logger = logger;
         }
 
         public override async Task OnActivateAsync()
@@ -109,6 +112,8 @@ namespace Backend.Features.Jobs
         {
             if (_instanceId is {} instanceId)
             {
+                _logger.LogInformation("Job requested");
+
                 return Task.FromResult(new JobInstanceModel(instanceId));
             }
 

@@ -14,6 +14,8 @@ namespace Frontend.Features.Jobs.Services
         Task<JobModel?> LoadJob(Guid jobId);
 
         Task UpdateJob(JobModel model);
+
+        Task StartJob(Guid jobId);
     }
 
     public class JobService : IJobService
@@ -41,6 +43,12 @@ namespace Frontend.Features.Jobs.Services
         {
             var job = _clusterClient.GetGrain<IJobGrain>(model.JobId);
             await job.Update(model);
+        }
+
+        public async Task StartJob(Guid jobId)
+        {
+            var job = _clusterClient.GetGrain<IJobGrain>(jobId);
+            await job.Start();
         }
     }
 }

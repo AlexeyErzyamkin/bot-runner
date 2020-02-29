@@ -4,6 +4,7 @@ using Backend.Contracts.Features.Jobs;
 using Backend.Contracts.Streams;
 using Backend.Features.Jobs;
 using Backend.Models.Features.Workers;
+using Microsoft.Extensions.Logging;
 
 namespace Backend.Features.Workers
 {
@@ -12,11 +13,18 @@ namespace Backend.Features.Workers
 
     class WorkerGrain : Grain, IWorkerGrain
     {
+        private readonly ILogger<WorkerGrain> _logger;
+
         private StreamConsumer<WorkerMuster>? _streamMuster;
         private StreamProducer<WorkerUpdate>? _streamUpdates;
         private StreamConsumer<JobAvailable>? _streamJobAvailable;
 
         private WorkerModel? _model;
+
+        public WorkerGrain(ILogger<WorkerGrain> logger)
+        {
+            _logger = logger;
+        }
 
         public override async Task OnActivateAsync()
         {
@@ -70,7 +78,11 @@ namespace Backend.Features.Workers
 
         private async Task OnJobAvailable(JobAvailable jobAvailable)
         {
+            _logger.LogInformation("Job available");
+
             var result = await jobAvailable.JobProvider.RequestJob();
+
+            _logger.LogInformation($"Job instance received: {result.InstanceId.ToString()}");
         }
     }
 }

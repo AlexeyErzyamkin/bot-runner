@@ -17,7 +17,12 @@
 @inject IJobService JobService
 
 <JobEditModalComponent @ref="@_jobEditModal" Id="@_editModalId" Job="@_editingJob" OnOkCallback="@OnJobEditComplete"/>
-<JobsListComponent Jobs="@_jobs" OnJobEdit="@OnJobEdit"/>
+
+<CascadingValue Name="OnEdit" Value="@_onEditFunc">
+    <CascadingValue Name="OnStart" Value="@_onStartFunc">
+        <JobsListComponent Jobs="@_jobs"/>
+    </CascadingValue>
+</CascadingValue>
 
 <div class="mt-4">
     <button class="btn btn-primary" @onclick="@OnAddJobClick">Add Job</button>
@@ -30,19 +35,20 @@
     private readonly Dictionary<Guid, int> _jobIndexes = new Dictionary<Guid, int>();
     private readonly string _editModalId = $"modal-{Guid.NewGuid().ToString()}";
 
+    private readonly JobFunc _onEditFunc;
+    private readonly JobFunc _onStartFunc;
+
     private StreamConsumer<JobUpdate>? _streamUpdates;
     private StreamProducer<JobMuster>? _streamMuster;
 
     private JobEditModalComponent? _jobEditModal;
     private JobModel? _editingJob;
 
-    // public JobsPage()
-    // {
-    //     var sp = ClusterClient.GetStreamProvider(Constants.StreamProviderName);
-    //
-    //     _streamUpdates = new StreamConsumer<JobUpdate>(sp, JobConstants.StreamId, JobConstants.UpdatesStreamNs, OnUpdate);
-    //     _streamMuster = new StreamProducer<JobMuster>(sp, JobConstants.StreamId, JobConstants.MusterStreamNs);
-    // }
+    public JobsPage()
+    {
+        _onEditFunc = OnJobEdit;
+        _onStartFunc = OnJobStart;
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -81,6 +87,11 @@
         AddJob(job);
 
         await JobService.UpdateJob(job);
+    }
+
+    private async Task OnJobStart(JobModelView job)
+    {
+        await JobService.StartJob(job.Model.JobId);
     }
 
     private Task OnJobEdit(JobModelView job)
@@ -172,14 +183,14 @@
                     throw new Exception($"Job '{item.JobId.ToString()}' not found");
                 }
 
-                // existingModel.Status = JobModelViewStatus.Active;
+    // existingModel.Status = JobModelViewStatus.Active;
 
                 break;
             }
 
             case JobUpdate.Update update:
             {
-                // existingModel.Status = JobModelViewStatus.Active;
+    // existingModel.Status = JobModelViewStatus.Active;
 
                 if (await JobService.LoadJob(item.JobId) is {} loadedJob)
                 {
@@ -195,7 +206,7 @@
 
             case JobUpdate.Delete _:
             {
-                // existingModel.Status = JobModelViewStatus.Deleted;
+    // existingModel.Status = JobModelViewStatus.Deleted;
 
                 if (_jobIndexes.TryGetValue(item.JobId, out var index))
                 {

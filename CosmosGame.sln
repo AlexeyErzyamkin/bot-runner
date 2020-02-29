@@ -3,15 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29613.14
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Backend", "Backend\Backend.csproj", "{55324960-7EFF-4875-94D0-F182EE69A259}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Backend", "src\Backend\Backend.csproj", "{55324960-7EFF-4875-94D0-F182EE69A259}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared", "Shared\Shared.csproj", "{3A0BEE1A-7E5F-4113-B460-D93E12C2CD44}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared", "src\Shared\Shared.csproj", "{3A0BEE1A-7E5F-4113-B460-D93E12C2CD44}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Frontend", "Frontend\Frontend.csproj", "{5B5E3005-A4BF-4513-AFAD-7814AE2FFF1D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Frontend", "src\Frontend\Frontend.csproj", "{5B5E3005-A4BF-4513-AFAD-7814AE2FFF1D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Frontend.Contracts", "Frontend.Contracts\Frontend.Contracts.csproj", "{B0142E48-1001-4480-9220-6CDE21F82EDF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Frontend.Contracts", "src\Frontend.Contracts\Frontend.Contracts.csproj", "{B0142E48-1001-4480-9220-6CDE21F82EDF}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Backend.Contracts", "Backend.Contracts\Backend.Contracts.csproj", "{CA66DDC3-F4F6-4AB2-B9B4-22461ACFA307}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Backend.Contracts", "src\Backend.Contracts\Backend.Contracts.csproj", "{CA66DDC3-F4F6-4AB2-B9B4-22461ACFA307}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Backends", "Backends", "{200DB267-BB5E-4B0B-8EBB-43FC4B91200A}"
 EndProject
@@ -21,15 +21,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Other", "Other", "{99E09C92
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Workers", "Workers", "{8D2E3336-6D89-40BD-A2F1-0D3223A45230}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Worker", "Worker\Worker.csproj", "{5D64B642-D954-45C0-AFC3-242B16AC5292}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Worker", "src\Worker\Worker.csproj", "{5D64B642-D954-45C0-AFC3-242B16AC5292}"
 EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Protos", "Protos\Protos.shproj", "{6A93BDC3-F060-4A3E-BFA6-8A14328880F8}"
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Protos", "src\Protos\Protos.shproj", "{6A93BDC3-F060-4A3E-BFA6-8A14328880F8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Backend.GrpcHost", "Backend.GrpcHost\Backend.GrpcHost.csproj", "{F5B6FFF3-CF95-4ADE-AD19-D78B4B50620B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Backend.GrpcHost", "src\Backend.GrpcHost\Backend.GrpcHost.csproj", "{F5B6FFF3-CF95-4ADE-AD19-D78B4B50620B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Backend.Models", "Backend.Models\Backend.Models.csproj", "{28D0AF9E-0F68-4E46-A6B2-07F5D2ED7959}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Backend.Models", "src\Backend.Models\Backend.Models.csproj", "{28D0AF9E-0F68-4E46-A6B2-07F5D2ED7959}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Backend.MongoStorage", "Backend.MongoStorage\Backend.MongoStorage.csproj", "{5D1E7F84-7B09-4F7B-9BCD-1D78ABE9F749}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Backend.MongoStorage", "src\Backend.MongoStorage\Backend.MongoStorage.csproj", "{5D1E7F84-7B09-4F7B-9BCD-1D78ABE9F749}"
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution

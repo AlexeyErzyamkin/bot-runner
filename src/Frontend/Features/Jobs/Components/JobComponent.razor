@@ -13,6 +13,13 @@
             <button class="btn btn-primary" @onclick="@OnEditPressed">Edit</button>
         }
     </td>
+
+    <td>
+        @if (OnStart != null)
+        {
+            <button class="btn btn-info" @onclick="@OnStartPressed">Start</button>
+        }
+    </td>
 }
 
 @code
@@ -20,14 +27,25 @@
     [Parameter]
     public JobModelView? Job { get; set; }
 
-    [Parameter]
-    public Func<JobModelView, Task>? OnEdit { get; set; }
+    [CascadingParameter(Name = "OnEdit")]
+    public JobFunc? OnEdit { get; set; }
+
+    [CascadingParameter(Name = "OnStart")]
+    public JobFunc? OnStart { get; set; }
 
     private async Task OnEditPressed()
     {
         if (OnEdit != null && Job != null)
         {
             await OnEdit(Job);
+        }
+    }
+
+    private async Task OnStartPressed()
+    {
+        if (OnStart != null && Job != null)
+        {
+            await OnStart(Job);
         }
     }
 }
